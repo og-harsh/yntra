@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YNTRA | The New Standard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="shortcut icon" href="assets\images\favicon.png" type="image/x-icon">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Syncopate:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        display: ['Syncopate', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: '#050505',
+                        accent: '#FF3B30',
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* CUSTOM CURSOR - Only for desktop */
+        @media (pointer: fine) {
+            #cursor {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 20px;
+                height: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                transform: translate(-50%, -50%);
+                transition: width 0.3s, height 0.3s, background-color 0.3s;
+                mix-blend-mode: difference;
+                display: block;
+            }
+
+            #cursor.hovered {
+                width: 50px;
+                height: 50px;
+                background-color: white;
+                border-color: transparent;
+                mix-blend-mode: difference;
+            }
+        }
+
+        @media (pointer: coarse) {
+            #cursor {
+                display: none;
+            }
+        }
+
+        /* NOISE OVERLAY */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+        }
+
+        /* PRELOADER */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader-bar {
+            width: 200px;
+            height: 2px;
+            background: #333;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: #FF3B30;
+        }
+
+        /* 3D CANVAS */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        ::selection {
+            background: #FF3B30;
+            color: #000;
+        }
+
+        /* MOBILE MENU TRANSITIONS */
+        #mobile-menu {
+            transition: transform 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        
+        .hamburger-line {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* MARQUEE ANIMATION */
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 15s linear infinite;
+        }
+
+        /* FOOTER STYLES */
+        .footer-link {
+            position: relative;
+            display: inline-block;
+        }
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background-color: #FF3B30;
+            transition: width 0.3s ease-in-out;
+        }
+        .footer-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="cursor"></div>
+    <div class="noise-overlay"></div>
+
+    <div id="preloader">
+        <h1 class="text-4xl font-display font-bold tracking-widest text-white glitch-load">YNTRA</h1>
+        <div class="font-mono text-xs text-accent mt-2 tracking-[0.5em]" id="loader-text">INITIALIZING SYSTEM</div>
+        <div class="loader-bar">
+            <div class="loader-progress" id="loader-progress"></div>
+        </div>
+    </div>
+
+    <div id="webgl-container"></div>
+
+    <nav class="fixed top-0 w-full z-50 px-6 md:px-12 py-6 flex justify-between items-center mix-blend-difference text-white">
+        <a href="index.html" class="block group z-50 relative">
+            <img src="assets/images/Gemini_Generated_Image_cc2w4zcc2w4zcc2w (1).png" alt="YNTRA"
+                class="h-10 md:h-16 w-auto object-contain hover:opacity-80 transition-opacity">
+        </a>
+
+        <div class="hidden md:flex gap-12 text-xs font-mono tracking-widest uppercase">
+            <a href="manifesto.html" class="hover-trigger relative overflow-hidden group">
+                <span class="inline-block transition-transform group-hover:-translate-y-full" data-value="Manifesto">Manifesto</span>
+                <span class="absolute top-full left-0 transition-transform group-hover:-translate-y-full text-accent">Manifesto</span>
+            </a>
+            <a href="product.html" class="hover-trigger relative overflow-hidden group">
+                <span class="inline-block transition-transform group-hover:-translate-y-full" data-value="Arsenal">Arsenal</span>
+                <span class="absolute top-full left-0 transition-transform group-hover:-translate-y-full text-accent">Arsenal</span>
+            </a>
+            <a href="login.html" id="home-login-link" class="hover-trigger relative overflow-hidden group">
+                <span id="login-text-1" class="inline-block transition-transform group-hover:-translate-y-full" data-value="Login">Login</span>
+                <span id="login-text-2" class="absolute top-full left-0 transition-transform group-hover:-translate-y-full text-accent">Login</span>
+            </a>
+        </div>
+
+        <button id="menu-btn" class="md:hidden z-50 flex flex-col gap-1.5 focus:outline-none p-2">
+            <span class="hamburger-line w-6 h-0.5 bg-white block origin-center"></span>
+            <span class="hamburger-line w-6 h-0.5 bg-white block origin-center"></span>
+        </button>
+    </nav>
+
+    <div id="mobile-menu" class="fixed inset-0 bg-obsidian z-40 flex flex-col items-center justify-center translate-x-full md:hidden">
+        <div class="flex flex-col gap-8 text-center">
+            <a href="manifesto.html" class="mobile-link text-3xl font-display font-bold uppercase hover:text-accent transition-colors">Manifesto</a>
+            <a href="product.html" class="mobile-link text-3xl font-display font-bold uppercase hover:text-accent transition-colors">Arsenal</a>
+            <a href="login.html" id="mobile-login-link" class="mobile-link text-3xl font-display font-bold uppercase hover:text-accent transition-colors">Login</a>
+        </div>
+        <div class="absolute bottom-10 text-xs font-mono text-gray-500 tracking-widest">
+            SYSTEM STATUS: ONLINE
+        </div>
+    </div>
+
+    <main id="smooth-wrapper" class="relative z-10">
+
+        <section class="min-h-[100dvh] w-full flex flex-col justify-center items-center text-center px-4 relative">
+            <div class="overflow-hidden mb-4">
+                <p class="text-[10px] md:text-sm font-mono text-accent tracking-[0.3em] md:tracking-[0.5em] uppercase reveal-text translate-y-full">
+                    The Next Standard
+                </p>
+            </div>
+
+            <h1 class="text-5xl sm:text-7xl md:text-[10rem] font-display font-bold uppercase tracking-tighter leading-[0.9] mb-8 mix-blend-overlay opacity-80 reveal-text translate-y-full">
+                Beyond<br>Limits
+            </h1>
+
+            <div class="mt-4 md:mt-8 flex gap-4 reveal-text translate-y-full opacity-0">
+                <button onclick="window.location.href='product.html'"
+                    class="hover-trigger px-6 py-3 md:px-8 md:py-3 bg-white text-black font-mono text-xs uppercase tracking-widest hover:bg-accent hover:text-white transition-all duration-300">
+                    Enter Arsenal
+                </button>
+            </div>
+
+            <div class="absolute bottom-8 md:bottom-12 flex flex-col items-center gap-4 mix-blend-difference">
+                <span class="text-[10px] font-mono uppercase tracking-widest animate-pulse">Scroll to Initialize</span>
+            </div>
+        </section>
+
+        <section class="min-h-screen w-full py-16 md:py-24 px-6 flex items-center justify-center relative bg-gradient-to-b from-transparent to-black/90">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-2xl md:text-5xl font-display font-bold leading-tight mb-12 text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-600">
+                    We do not build computers.<br>
+                    We engineer <span class="text-accent">superiority.</span>
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8 text-left mt-10 md:mt-20">
+                    <div class="border-l border-white/20 pl-6 hover:border-accent transition-colors duration-500 group py-2">
+                        <span class="block text-accent font-mono text-xs mb-2">01 // SPEED</span>
+                        <p class="text-gray-400 text-sm leading-relaxed group-hover:text-white transition-colors">
+                            Zero latency architecture designed for the digital elite.
+                        </p>
+                    </div>
+                    <div class="border-l border-white/20 pl-6 hover:border-accent transition-colors duration-500 group py-2">
+                        <span class="block text-accent font-mono text-xs mb-2">02 // DESIGN</span>
+                        <p class="text-gray-400 text-sm leading-relaxed group-hover:text-white transition-colors">
+                            Industrial elegance meets military-grade durability.
+                        </p>
+                    </div>
+                    <div class="border-l border-white/20 pl-6 hover:border-accent transition-colors duration-500 group py-2">
+                        <span class="block text-accent font-mono text-xs mb-2">03 // POWER</span>
+                        <p class="text-gray-400 text-sm leading-relaxed group-hover:text-white transition-colors">
+                            Unrestricted silicon performance. Overclocking enabled.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-8 md:py-12 bg-accent border-y border-white/10 overflow-hidden relative">
+            <div class="whitespace-nowrap flex animate-marquee">
+                <span class="text-3xl md:text-6xl font-display font-bold text-black px-4 md:px-8">SYSTEM ONLINE //</span>
+                <span class="text-3xl md:text-6xl font-display font-bold text-black px-4 md:px-8">NO LIMITS //</span>
+                <span class="text-3xl md:text-6xl font-display font-bold text-black px-4 md:px-8">PURE SILICON //</span>
+                <span class="text-3xl md:text-6xl font-display font-bold text-black px-4 md:px-8">SYSTEM ONLINE //</span>
+                <span class="text-3xl md:text-6xl font-display font-bold text-black px-4 md:px-8">NO LIMITS //</span>
+                <span class="text-3xl md:text-6xl font-display font-bold text-black px-4 md:px-8">PURE SILICON //</span>
+            </div>
+        </section>
+
+        <section class="h-[60vh] md:h-[80vh] w-full flex flex-col items-center justify-center bg-obsidian relative">
+            <p class="text-gray-500 font-mono text-xs uppercase tracking-widest mb-4">Inventory Status: Unlocked</p>
+            <h2 class="text-5xl md:text-9xl font-display font-bold text-white mb-8 hover:text-accent transition-colors duration-500 cursor-pointer text-center"
+                onclick="window.location.href='product.html'">
+                SHOP NOW
+            </h2>
+        </section>
+
+    </main>
+
+
+    <footer class="relative z-20 bg-obsidian pt-20 pb-10 px-6 md:px-12 border-t-2 border-accent overflow-hidden">
+        
+        <div class="absolute -bottom-10 left-0 w-full select-none pointer-events-none overflow-hidden">
+             <h2 class="text-[15vw] font-display font-bold text-white/[0.03] leading-none tracking-tighter text-center">YNTRA SYSTEMS</h2>
+        </div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8 mb-16">
+                
+                <div class="col-span-1 md:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <img src="assets/images/Gemini_Generated_Image_cc2w4zcc2w4zcc2w (1).png" alt="YNTRA Logo" class="h-12 w-auto mb-6 opacity-80">
+                        <p class="text-gray-400 font-mono text-sm max-w-sm leading-relaxed">
+                            Engineering the future of high-performance computing. Built for those who refuse to compromise.
+                        </p>
+                    </div>
+                    <div class="mt-8 hidden md:block">
+                        <p class="text-accent font-mono text-[10px] tracking-[0.2em] uppercase mb-2">// SYSTEM STATUS</p>
+                        <div class="flex items-center gap-2">
+                            <span class="h-2 w-2 rounded-full bg-accent animate-pulse"></span>
+                            <span class="text-xs font-mono text-gray-300">ALL SYSTEMS OPERATIONAL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-display tracking-wider mb-6 uppercase">Direct Link</h4>
+                    <ul class="flex flex-col gap-4 font-mono text-xs tracking-widest uppercase text-gray-400">
+                        <li><a href="index.html" class="footer-link hover:text-accent transition-colors">Home_Base</a></li>
+                        <li><a href="manifesto.html" class="footer-link hover:text-accent transition-colors">Manifesto_Protocol</a></li>
+                        <li><a href="product.html" class="footer-link hover:text-accent transition-colors">Arsenal_View</a></li>
+                        <li><a href="#" class="footer-link hover:text-accent transition-colors">Support_Ticket</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-display tracking-wider mb-6 uppercase">Connect Data</h4>
+                    <ul class="flex flex-col gap-4 font-mono text-xs tracking-widest uppercase text-gray-400 mb-8">
+                        <li><a href="#" class="footer-link hover:text-accent transition-colors font-sans lowercase">hello@yntra.tech</a></li>
+                        <div class="flex gap-4 mt-2 text-lg">
+                            <a href="#" class="hover:text-accent transition-colors"><i class="fa-brands fa-x-twitter"></i></a>
+                            <a href="https://www.instagram.com/whyy.harsh/" class="hover:text-accent transition-colors"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" class="hover:text-accent transition-colors"><i class="fa-brands fa-discord"></i></a>
+                        </div>
+                    </ul>
+                    
+                    <div class="md:hidden mt-8 border-t border-white/10 pt-4">
+                        <p class="text-accent font-mono text-[10px] tracking-[0.2em] uppercase mb-2">// SERVER TIME</p>
+                         <span class="text-xs font-mono text-gray-500" id="server-time">Loading...</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 font-mono text-[13px] text-gray-500 uppercase tracking-widest">
+                <p>© 2026 YNTRA INC. // SECURE CONNECTION ESTABLISHED.</p>
+                <div class="flex gap-8">
+                    <a href="#" class="hover:text-white transition-colors">Privacy Protocol</a>
+                    <a href="#" class="hover:text-white transition-colors">Terms of Engagement</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+
+    <script>
+        // --- MOBILE MENU LOGIC ---
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const hamburgerLines = document.querySelectorAll('.hamburger-line');
+        let isMenuOpen = false;
+
+        menuBtn.addEventListener('click', () => {
+            isMenuOpen = !isMenuOpen;
+            if (isMenuOpen) {
+                mobileMenu.classList.remove('translate-x-full');
+                hamburgerLines[0].style.transform = 'rotate(45deg) translate(5px, 6px)';
+                hamburgerLines[1].style.transform = 'rotate(-45deg) translate(5px, -6px)';
+            } else {
+                mobileMenu.classList.add('translate-x-full');
+                hamburgerLines[0].style.transform = 'none';
+                hamburgerLines[1].style.transform = 'none';
+            }
+        });
+
+        document.querySelectorAll('.mobile-link').forEach(link => {
+            link.addEventListener('click', () => {
+                isMenuOpen = false;
+                mobileMenu.classList.add('translate-x-full');
+                hamburgerLines[0].style.transform = 'none';
+                hamburgerLines[1].style.transform = 'none';
+            });
+        });
+
+        // --- USER SESSION CHECK ---
+        window.addEventListener('load', () => {
+            const session = JSON.parse(localStorage.getItem('yntraSession'));
+            if (session) {
+                const link = document.getElementById('home-login-link');
+                const t1 = document.getElementById('login-text-1');
+                const t2 = document.getElementById('login-text-2');
+                const mobileLogin = document.getElementById('mobile-login-link');
+                if (t1) { t1.innerText = session.name; t1.dataset.value = session.name; }
+                if (t2) { t2.innerText = session.name; }
+                if (mobileLogin) { mobileLogin.innerText = session.name; }
+                if (link) link.href = "product.html";
+                if (mobileLogin) mobileLogin.href = "product.html";
+            }
+
+            // Fake Server Time for Footer
+            const timeDisplay = document.getElementById('server-time');
+            if(timeDisplay) {
+                setInterval(() => {
+                    timeDisplay.innerText = new Date().toUTCString();
+                }, 1000);
+            }
+        });
+
+        // --- EXISTING ANIMATIONS & THREE.JS ---
+        const isMobile = window.innerWidth < 768;
+
+        window.addEventListener("load", () => {
+            const tl = gsap.timeline();
+            tl.to("#loader-progress", { width: "100%", duration: 2, ease: "power2.inOut" })
+                .to("#preloader", { y: "-100%", duration: 1, ease: "expo.inOut", delay: 0.2 })
+                .to(".reveal-text", { y: 0, opacity: 1, duration: 1.5, stagger: 0.2, ease: "power4.out" });
+        });
+
+        const lenis = new Lenis({
+            duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical', smooth: true, mouseMultiplier: 1, touchMultiplier: 1.5,
+        });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+
+        if (!isMobile) {
+            const cursor = document.getElementById('cursor');
+            const hoverTriggers = document.querySelectorAll('.hover-trigger, a, button, .footer-link');
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+            });
+            hoverTriggers.forEach(link => {
+                link.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+                link.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+            });
+        }
+
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        document.querySelectorAll("nav a span").forEach(item => {
+            item.onmouseover = event => {
+                let iteration = 0;
+                clearInterval(event.target.interval);
+                event.target.interval = setInterval(() => {
+                    event.target.innerText = event.target.innerText
+                        .split("").map((letter, index) => {
+                            if (index < iteration) return event.target.dataset.value[index];
+                            return letters[Math.floor(Math.random() * 26)];
+                        }).join("");
+                    if (iteration >= event.target.dataset.value.length) clearInterval(event.target.interval);
+                    iteration += 1 / 3;
+                }, 30);
+            };
+        });
+
+        // --- THREE.JS BACKGROUND ---
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.002);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = isMobile ? 6 : 5; 
+        camera.position.y = 3; 
+        camera.rotation.x = -0.5;
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const segs = isMobile ? 20 : 60;
+        const planeGeometry = new THREE.PlaneGeometry(80, 80, segs, segs);
+        const planeMaterial = new THREE.MeshBasicMaterial({ color: 0x333333, wireframe: true, transparent: true, opacity: 0.3 });
+        const terrain = new THREE.Mesh(planeGeometry, planeMaterial);
+        terrain.rotation.x = -Math.PI / 2;
+        scene.add(terrain);
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = isMobile ? 200 : 700;
+        const posArray = new Float32Array(particlesCount * 3);
+        for (let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 50;
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({ size: 0.05, color: 0xFF3B30, transparent: true, opacity: 0.8 });
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
+
+        let composer;
+        if (!isMobile) {
+            const renderScene = new THREE.RenderPass(scene, camera);
+            const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0; bloomPass.strength = 1.2; bloomPass.radius = 0;
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(renderScene); composer.addPass(bloomPass);
+        }
+
+        let time = 0; let mouseX = 0; let mouseY = 0;
+        const windowHalfX = window.innerWidth / 2; const windowHalfY = window.innerHeight / 2;
+        document.addEventListener('mousemove', (event) => { mouseX = (event.clientX - windowHalfX); mouseY = (event.clientY - windowHalfY); });
+
+        function animate() {
+            time += 0.005;
+            if (!isMobile) {
+                const positionAttribute = planeGeometry.attributes.position;
+                for (let i = 0; i < positionAttribute.count; i++) {
+                    const z = 0.5 * Math.sin(i / 2 + (time * 10));
+                    positionAttribute.setZ(i, z);
+                }
+                positionAttribute.needsUpdate = true;
+            } else { terrain.rotation.z += 0.001; }
+
+            particles.rotation.y = time * 0.2; terrain.position.z = (time * 5) % 2;
+            if (!isMobile) {
+                terrain.rotation.z += 0.05 * (mouseX * 0.001 - terrain.rotation.z);
+                terrain.rotation.x = -Math.PI / 2 + 0.05 * (mouseY * 0.001 - (terrain.rotation.x + Math.PI / 2));
+            }
+            if (!isMobile && composer) composer.render(); else renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

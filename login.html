@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YNTRA | Secure Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 
+                        'yntra-red': '#FF3B30', 
+                        'glass-border': 'rgba(255, 255, 255, 0.1)',
+                        'glass-bg': 'rgba(10, 10, 10, 0.75)'
+                    },
+                    fontFamily: { 
+                        sans: ['Space Grotesk', 'sans-serif'], 
+                        display: ['Syncopate', 'sans-serif'] 
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- BACKGROUND SETUP --- */
+        body {
+            /* Apni image ka path yahan confirm karein */
+            background-image: url('assets/images/system-core/Trending 4K Amoled Walpaper For PC.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.95) 100%);
+            z-index: 0;
+        }
+
+        /* --- GLASS CARD STYLING --- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            position: relative;
+            z-index: 10;
+            overflow: hidden;
+            transition: height 0.3s ease;
+        }
+
+        /* Scanline/Noise Effect */
+        .glass-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.2) 2px,
+                rgba(0, 0, 0, 0.2) 4px
+            );
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* --- INPUTS --- */
+        .cyber-input-group { position: relative; margin-bottom: 1.5rem; text-align: left; }
+
+        .cyber-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .cyber-input:focus {
+            outline: none;
+            border-color: #FF3B30;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 15px rgba(255, 59, 48, 0.2);
+        }
+
+        .cyber-label {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .cyber-input:focus ~ .cyber-label,
+        .cyber-input:not(:placeholder-shown) ~ .cyber-label {
+            top: -10px;
+            left: 10px;
+            font-size: 0.7rem;
+            color: #FF3B30;
+            background: #000;
+            padding: 0 5px;
+            font-weight: bold;
+        }
+
+        /* --- BUTTONS --- */
+        .cyber-btn {
+            background: white;
+            color: black;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cyber-btn:hover {
+            background: #FF3B30;
+            color: white;
+            box-shadow: 0 0 20px rgba(255, 59, 48, 0.6);
+        }
+
+        .cyber-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* --- ANIMATIONS --- */
+        .form-container {
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        
+        .hidden-form {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        
+        .active-form {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notify Box Animation */
+        #notify-box {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(-10px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        #notify-box.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    
+    <div class="bg-overlay"></div>
+
+    <div class="glass-card w-full max-w-[450px] rounded-2xl p-8 flex flex-col items-center text-center">
+        
+        <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-yntra-red to-transparent opacity-80"></div>
+
+        <div class="mb-8 relative z-20 w-full">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 border border-white/10 mb-4 shadow-[0_0_25px_rgba(255,59,48,0.3)]">
+                <i class="fa-solid fa-shield-halved text-3xl text-yntra-red"></i>
+            </div>
+            <h1 class="text-4xl font-display font-bold text-white tracking-tighter mb-1">YNTRA</h1>
+            <p class="text-[10px] font-mono text-gray-400 tracking-[0.4em] uppercase">Secure Access Gateway</p>
+        </div>
+
+        <div id="notify-box" class="w-full mb-6 p-3 rounded bg-black/80 border-l-4 border-yntra-red text-left backdrop-blur-md absolute top-20 left-0 right-0 mx-auto max-w-[85%] z-50">
+            <p id="notify-msg" class="text-white text-xs font-mono font-bold"></p>
+        </div>
+
+        <div id="login-container" class="w-full form-container active-form">
+            <form id="loginForm" class="relative z-20">
+                <div class="cyber-input-group">
+                    <input type="email" id="login-email" class="cyber-input" placeholder=" " required>
+                    <label class="cyber-label">Identify (Email)</label>
+                </div>
+                <div class="cyber-input-group">
+                    <input type="password" id="login-pass" class="cyber-input" placeholder=" " required>
+                    <label class="cyber-label">Access Code</label>
+                </div>
+                
+                <button type="submit" id="login-btn" class="cyber-btn w-full py-4 rounded-lg mt-2 text-sm">
+                    Access System
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-white/10 w-full">
+                <p class="text-gray-400 text-[10px] font-mono tracking-wider">NO CLEARANCE?</p>
+                <button onclick="toggleView('register')" class="mt-2 text-white hover:text-yntra-red transition-colors text-xs font-bold tracking-widest uppercase border-b border-transparent hover:border-yntra-red pb-1">
+                    Request Protocol Initialization
+                </button>
+            </div>
+        </div>
+
+        <div id="register-container" class="w-full form-container hidden-form">
+            <form id="registerForm" class="relative z-20">
+                <div class="cyber-input-group">
+                    <input type="text" id="reg-name" class="cyber-input" placeholder=" " required>
+                    <label class="cyber-label">Agent Codename</label>
+                </div>
+                <div class="cyber-input-group">
+                    <input type="email" id="reg-email" class="cyber-input" placeholder=" " required>
+                    <label class="cyber-label">Link Email</label>
+                </div>
+                <div class="cyber-input-group">
+                    <input type="password" id="reg-pass" class="cyber-input" placeholder=" " required>
+                    <label class="cyber-label">Set Password</label>
+                </div>
+                
+                <button type="submit" id="reg-btn" class="cyber-btn w-full py-4 rounded-lg mt-2 text-sm border border-yntra-red text-yntra-red bg-transparent hover:bg-yntra-red hover:text-white">
+                    Create Identity
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-white/10 w-full">
+                <p class="text-gray-400 text-[10px] font-mono tracking-wider">IDENTITY EXISTS?</p>
+                <button onclick="toggleView('login')" class="mt-2 text-white hover:text-yntra-red transition-colors text-xs font-bold tracking-widest uppercase border-b border-transparent hover:border-yntra-red pb-1">
+                    Return to Login
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="fixed bottom-6 left-6 text-[10px] text-white/30 font-mono hidden md:block">
+        SYS.STATUS: ONLINE<br>ENCRYPTION: STANDARD
+    </div>
+
+    <script>
+        // --- 1. DOM ELEMENTS ---
+        const loginContainer = document.getElementById('login-container');
+        const registerContainer = document.getElementById('register-container');
+        const notifyBox = document.getElementById('notify-box');
+        const notifyMsg = document.getElementById('notify-msg');
+
+        // --- 2. NOTIFICATION SYSTEM ---
+        function showNotify(msg, type = 'success') {
+            notifyMsg.innerText = msg;
+            notifyBox.style.borderColor = type === 'error' ? '#FF3B30' : '#00ff88';
+            notifyMsg.style.color = type === 'error' ? '#ff8080' : '#ccffdd';
+            
+            notifyBox.classList.add('show');
+            
+            // Auto hide after 3 seconds
+            setTimeout(() => {
+                notifyBox.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- 3. SWITCH VIEW LOGIC ---
+        function toggleView(view) {
+            // Reset forms
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+            notifyBox.classList.remove('show');
+
+            if (view === 'register') {
+                loginContainer.classList.remove('active-form');
+                loginContainer.classList.add('hidden-form');
+                
+                // Small delay for smooth effect
+                setTimeout(() => {
+                    registerContainer.classList.remove('hidden-form');
+                    registerContainer.classList.add('active-form');
+                }, 100);
+            } else {
+                registerContainer.classList.remove('active-form');
+                registerContainer.classList.add('hidden-form');
+                
+                setTimeout(() => {
+                    loginContainer.classList.remove('hidden-form');
+                    loginContainer.classList.add('active-form');
+                }, 100);
+            }
+        }
+
+        // --- 4. AUTHENTICATION LOGIC ---
+        
+        // Function to get users safely
+        function getUsersDB() {
+            const users = localStorage.getItem('yntraUsersDB');
+            return users ? JSON.parse(users) : [];
+        }
+
+        // REGISTER HANDLER
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Stop page reload
+
+            const btn = document.getElementById('reg-btn');
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+
+            if(!name || !email || !pass) {
+                showNotify("ERROR: EMPTY FIELDS DETECTED", 'error');
+                return;
+            }
+
+            // Set Loading State
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> INITIALIZING...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                let users = getUsersDB();
+
+                // Check duplicate
+                if (users.find(u => u.email === email)) {
+                    showNotify("ERROR: IDENTITY ALREADY EXISTS", 'error');
+                    btn.innerHTML = 'Create Identity';
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Add new user
+                users.push({ name, email, pass });
+                localStorage.setItem('yntraUsersDB', JSON.stringify(users));
+
+                showNotify("SUCCESS: IDENTITY CREATED. REDIRECTING...");
+                
+                // Redirect to login view after short delay
+                setTimeout(() => {
+                    toggleView('login');
+                    btn.innerHTML = 'Create Identity';
+                    btn.disabled = false;
+                }, 1500);
+
+            }, 1000); // Fake processing delay for realism
+        });
+
+        // LOGIN HANDLER
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('login-btn');
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            if(!email || !pass) {
+                showNotify("ERROR: CREDENTIALS REQUIRED", 'error');
+                return;
+            }
+
+            // Set Loading State
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> VERIFYING...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                let users = getUsersDB();
+                const user = users.find(u => u.email === email && u.pass === pass);
+
+                if (user) {
+                    // Save Session
+                    localStorage.setItem('yntraSession', JSON.stringify(user));
+                    showNotify("ACCESS GRANTED. WELCOME AGENT " + user.name.toUpperCase());
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // Ensure this file exists!
+                    }, 1000);
+                } else {
+                    showNotify("ACCESS DENIED: INVALID DATA", 'error');
+                    btn.innerHTML = 'Access System';
+                    btn.disabled = false;
+                }
+            }, 1200);
+        });
+
+        // CHECK LOGIN ON LOAD
+        window.onload = () => {
+            const session = localStorage.getItem('yntraSession');
+            if (session) {
+                // Optional: Auto-redirect if already logged in
+                // window.location.href = 'index.html';
+                console.log("Active Session Detected");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HARSH | The Architect</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&family=JetBrains+Mono:wght@100;400;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="shortcut icon" href="assets\images\favicon.png" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        display: ['Syncopate', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        'yntra-red': '#FF3B30',
+                        'neon-blue': '#00F0FF',
+                        'void-black': '#050505',
+                        'carbon': '#0A0A0A',
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #1a1a1a 1px, transparent 1px), linear-gradient(to bottom, #1a1a1a 1px, transparent 1px)"
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- CORE --- */
+        html, body { 
+            background-color: #050505; 
+            color: #E5E5E5; 
+            margin: 0; 
+            padding: 0;
+            width: 100%;
+            /* Allow scrolling on mobile, hide on desktop if desired, but auto is safer */
+            overflow-x: hidden;
+            overflow-y: auto; 
+        }
+        
+        /* Hide scrollbar for Chrome/Safari/Opera */
+        ::-webkit-scrollbar { display: none; }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        html { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- PRELOADER --- */
+        #preloader {
+            position: fixed; inset: 0; background: #000; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- CUSTOM CURSOR (Only for Desktop) --- */
+        @media (pointer: fine) {
+            body { cursor: none; }
+            #cursor {
+                position: fixed; top: 0; left: 0; width: 20px; height: 20px;
+                border: 1px solid #FF3B30; transform: translate(-50%, -50%) rotate(45deg);
+                pointer-events: none; z-index: 9999; transition: width 0.3s, height 0.3s, background 0.2s;
+                mix-blend-mode: difference;
+            }
+            #cursor-dot {
+                position: fixed; top: 0; left: 0; width: 4px; height: 4px;
+                background: #FF3B30; border-radius: 50%; transform: translate(-50%, -50%);
+                pointer-events: none; z-index: 9999;
+            }
+            body.hovered #cursor { width: 50px; height: 50px; background: rgba(255, 59, 48, 0.1); border-color: transparent; }
+        }
+
+        @media (pointer: coarse) {
+            #cursor, #cursor-dot { display: none; }
+        }
+
+        /* --- UI ELEMENTS --- */
+        .glass-panel {
+            background: rgba(10, 10, 10, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-item {
+            position: relative;
+            padding-left: 20px;
+            transition: all 0.3s ease;
+            white-space: nowrap; /* Prevent wrapping in mobile scroll */
+        }
+        .nav-item::before {
+            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            width: 0px; height: 2px; background: #FF3B30; transition: width 0.3s ease;
+        }
+        .nav-item.active { color: white; padding-left: 30px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .nav-item.active::before { width: 20px; box-shadow: 0 0 10px #FF3B30; }
+
+        /* --- GLITCH TEXT --- */
+        .glitch-text { position: relative; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.8;
+        }
+        .glitch-text:hover::before { animation: glitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite; color: #00F0FF; clip-path: inset(0 0 60% 0); transform: translate(-2px, 2px); }
+        .glitch-text:hover::after { animation: glitch 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite reverse; color: #FF3B30; clip-path: inset(40% 0 0 0); transform: translate(2px, -2px); }
+        
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        /* --- SCROLLBAR --- */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .scanline {
+            width: 100%; height: 100vh; position: fixed; left: 0; top: 0; pointer-events: none; z-index: 50;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%; opacity: 0.15;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="preloader">
+        <div class="text-center">
+            <div id="loader-text" class="text-yntra-red font-bold text-xl mb-2">INITIALIZING...</div>
+            <div class="w-64 h-1 bg-gray-800 relative overflow-hidden">
+                <div id="loader-bar" class="absolute top-0 left-0 h-full bg-white w-0"></div>
+            </div>
+            <div class="mt-2 font-mono text-[10px] text-gray-500 text-left">
+                > LOADING ASSETS<br>
+                > DECRYPTING PORTFOLIO DATA<br>
+                > ACCESS GRANTED
+            </div>
+        </div>
+    </div>
+
+    <div id="cursor"></div>
+    <div id="cursor-dot"></div>
+
+    <canvas id="webgl-canvas" class="fixed inset-0 z-0"></canvas>
+    <div class="scanline"></div>
+    <div class="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-[1]"></div>
+    
+    <main class="relative z-10 w-full min-h-screen flex flex-col p-4 md:p-12 overflow-x-hidden select-none">
+        
+        <header class="flex justify-between items-start mb-6 md:mb-8 fade-in shrink-0">
+            <div>
+                <h1 class="font-display text-3xl md:text-5xl font-bold tracking-tighter leading-none">
+                    HARSH<span class="text-yntra-red">.</span>
+                </h1>
+                <div class="flex items-center gap-2 mt-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="font-mono text-[10px] text-gray-400 tracking-[0.2em]">ONLINE // UNA, INDIA</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 h-full pb-8">
+            
+            <div class="lg:col-span-3 flex flex-row lg:flex-col gap-4 lg:gap-2 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 justify-start lg:justify-start border-b lg:border-b-0 lg:border-l-2 border-white/5 pl-0 lg:pl-6 fade-in order-2 lg:order-1 shrink-0 hide-scrollbar">
+                <button onclick="switchTab('identity')" class="nav-item active hover-target text-left font-display text-gray-500 hover:text-white uppercase tracking-widest text-xs md:text-sm py-2 md:py-3 shrink-0">01 // Identity</button>
+                <button onclick="switchTab('arsenal')" class="nav-item hover-target text-left font-display text-gray-500 hover:text-white uppercase tracking-widest text-xs md:text-sm py-2 md:py-3 shrink-0">02 // Arsenal</button>
+                <button onclick="switchTab('databank')" class="nav-item hover-target text-left font-display text-gray-500 hover:text-white uppercase tracking-widest text-xs md:text-sm py-2 md:py-3 shrink-0">03 // Data Bank</button>
+                <button onclick="switchTab('trajectory')" class="nav-item hover-target text-left font-display text-gray-500 hover:text-white uppercase tracking-widest text-xs md:text-sm py-2 md:py-3 shrink-0">04 // Trajectory</button>
+            </div>
+
+            <div class="lg:col-span-6 relative perspective-1000 order-3 lg:order-2 min-h-[500px] lg:min-h-0">
+                
+                <div id="tab-identity" class="tab-content absolute inset-0 flex flex-col justify-start lg:justify-center pt-4 lg:pt-0">
+                    <p class="font-mono text-yntra-red mb-4 text-xs tracking-widest">[ CLASSIFIED_PROFILE ]</p>
+                    <h2 class="text-4xl md:text-7xl font-display font-bold leading-[0.85] mb-6 md:mb-8 glitch-text" data-text="DIGITAL ARCHITECT">
+                        DIGITAL<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-600">ARCHITECT</span>
+                    </h2>
+                    
+                    <div class="glass-panel p-5 md:p-8 border-l-4 border-yntra-red">
+                        <p class="font-sans text-base md:text-xl text-gray-300 leading-relaxed">
+                            "I bridge the gap between <span class="text-white font-bold">Psychology</span> and <span class="text-white font-bold">Pixel Perfection</span>. Obsessed with dark futuristic aesthetics and building high-performance web ecosystems."
+                        </p>
+                        <div class="mt-6 flex flex-wrap gap-3 font-mono text-[10px] md:text-xs text-gray-400">
+                            <span class="border border-white/20 px-2 py-1">BCA FINAL YEAR</span>
+                            <span class="border border-white/20 px-2 py-1">GEN-Z BUILDER</span>
+                            <span class="border border-white/20 px-2 py-1">REBUILD PROTOCOL</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-arsenal" class="tab-content absolute inset-0 flex flex-col justify-start lg:justify-center pt-4 lg:pt-0 opacity-0 pointer-events-none translate-y-10">
+                    <h2 class="text-3xl md:text-6xl font-display font-bold mb-6 md:mb-8">CURRENT LOADOUT</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[55vh] lg:max-h-[60vh] overflow-y-auto hide-scrollbar pb-10">
+                        <div class="glass-panel p-5 group hover-target hover:bg-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-4">
+                                <i class="fa-brands fa-react text-4xl text-gray-400 group-hover:text-cyan-400 transition-colors"></i>
+                                <span class="font-mono text-[10px] text-gray-500">LVL. 85</span>
+                            </div>
+                            <h3 class="font-bold text-xl mb-1">REACT.JS / NEXT</h3>
+                            <p class="text-xs text-gray-400 font-mono">COMPONENT ARCHITECTURE</p>
+                        </div>
+
+                        <div class="glass-panel p-5 group hover-target hover:bg-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-4">
+                                <i class="fa-solid fa-code text-4xl text-gray-400 group-hover:text-yellow-400 transition-colors"></i>
+                                <span class="font-mono text-[10px] text-gray-500">LVL. 90</span>
+                            </div>
+                            <h3 class="font-bold text-xl mb-1">JAVASCRIPT (ES6+)</h3>
+                            <p class="text-xs text-gray-400 font-mono">DOM MANIPULATION / LOGIC</p>
+                        </div>
+
+                        <div class="glass-panel p-5 group hover-target hover:bg-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-4">
+                                <i class="fa-brands fa-css3-alt text-4xl text-gray-400 group-hover:text-blue-400 transition-colors"></i>
+                                <span class="font-mono text-[10px] text-gray-500">LVL. 95</span>
+                            </div>
+                            <h3 class="font-bold text-xl mb-1">TAILWIND CSS</h3>
+                            <p class="text-xs text-gray-400 font-mono">RAPID UI DEVELOPMENT</p>
+                        </div>
+
+                        <div class="glass-panel p-5 group hover-target hover:bg-white/5 transition-all">
+                            <div class="flex justify-between items-start mb-4">
+                                <i class="fa-brands fa-figma text-4xl text-gray-400 group-hover:text-purple-400 transition-colors"></i>
+                                <span class="font-mono text-[10px] text-gray-500">LVL. 80</span>
+                            </div>
+                            <h3 class="font-bold text-xl mb-1">FIGMA & PHOTOSHOP</h3>
+                            <p class="text-xs text-gray-400 font-mono">UI/UX & VISUAL DESIGN</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-databank" class="tab-content absolute inset-0 flex flex-col justify-start lg:justify-center pt-4 lg:pt-0 opacity-0 pointer-events-none translate-y-10">
+                    <h2 class="text-3xl md:text-6xl font-display font-bold mb-6 md:mb-8">PERSONAL LOGS</h2>
+                    
+                    <div class="space-y-6 overflow-y-auto max-h-[60vh] hide-scrollbar pb-10">
+                        <div>
+                            <div class="font-mono text-yntra-red text-xs mb-2 border-b border-yntra-red/30 pb-1 inline-block">INTEL_INPUT (READING)</div>
+                            <div class="flex flex-col md:flex-row gap-4 mt-2">
+                                <div class="glass-panel p-4 flex-1 hover-target">
+                                    <h4 class="font-bold text-white"><i class="fa-solid fa-brain mr-2 text-gray-500"></i> PSYCHOLOGY</h4>
+                                    <p class="text-xs text-gray-400 mt-1">Understanding Human Behavior patterns.</p>
+                                </div>
+                                <div class="glass-panel p-4 flex-1 hover-target">
+                                    <h4 class="font-bold text-white"><i class="fa-solid fa-book-open mr-2 text-gray-500"></i> PHILOSOPHY</h4>
+                                    <p class="text-xs text-gray-400 mt-1">Stoicism & Existentialism.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="font-mono text-neon-blue text-xs mb-2 border-b border-neon-blue/30 pb-1 inline-block">DOWNTIME_ACTIVITIES</div>
+                            <div class="grid grid-cols-3 gap-3 mt-2">
+                                <div class="glass-panel p-3 text-center hover:bg-white/10 transition-colors hover-target">
+                                    <i class="fa-solid fa-paintbrush text-xl md:text-2xl mb-2 text-gray-300"></i>
+                                    <div class="text-[8px] md:text-[10px] font-mono font-bold">PAINTING</div>
+                                </div>
+                                <div class="glass-panel p-3 text-center hover:bg-white/10 transition-colors hover-target">
+                                    <i class="fa-solid fa-plane text-xl md:text-2xl mb-2 text-gray-300"></i>
+                                    <div class="text-[8px] md:text-[10px] font-mono font-bold">TRAVELING</div>
+                                </div>
+                                <div class="glass-panel p-3 text-center hover:bg-white/10 transition-colors hover-target">
+                                    <i class="fa-solid fa-gamepad text-xl md:text-2xl mb-2 text-gray-300"></i>
+                                    <div class="text-[8px] md:text-[10px] font-mono font-bold">GAMING</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-trajectory" class="tab-content absolute inset-0 flex flex-col justify-start lg:justify-center pt-4 lg:pt-0 opacity-0 pointer-events-none translate-y-10">
+                    <h2 class="text-3xl md:text-6xl font-display font-bold mb-2">SYSTEM UPGRADE</h2>
+                    <p class="font-mono text-yntra-red text-xs mb-6 md:mb-8 blink">INSTALLING: FULL_STACK_ARCHITECTURE...</p>
+                    
+                    <div class="glass-panel p-0 overflow-hidden">
+                        <div class="bg-gray-900/50 p-3 border-b border-white/10 flex gap-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-2 font-mono text-[10px] text-gray-500">roadmap.json</span>
+                        </div>
+                        <div class="p-4 md:p-6 font-mono text-[10px] md:text-sm text-gray-300 space-y-2 overflow-x-auto">
+                            <p><span class="text-green-400">const</span> <span class="text-blue-400">nextGoal</span> = {</p>
+                            <p class="pl-4">role: <span class="text-yellow-300">"Full Stack Developer"</span>,</p>
+                            <p class="pl-4">backend: [<span class="text-yellow-300">"Node.js"</span>, <span class="text-yellow-300">"Express"</span>, <span class="text-yellow-300">"Python"</span>],</p>
+                            <p class="pl-4">database: [<span class="text-yellow-300">"MongoDB"</span>, <span class="text-yellow-300">"PostgreSQL"</span>, <span class="text-yellow-300">"Redis"</span>],</p>
+                            <p class="pl-4">devops: [<span class="text-yellow-300">"Docker"</span>, <span class="text-yellow-300">"AWS"</span>, <span class="text-yellow-300">"CI/CD"</span>],</p>
+                            <p class="pl-4">status: <span class="text-yntra-red">"IN_PROGRESS"</span></p>
+                            <p>}</p>
+                        </div>
+                    </div>
+                    
+                    <a href="mailto:contact@harsh.dev" class="mt-6 md:mt-8 hover-target inline-flex items-center gap-2 border border-yntra-red text-yntra-red px-6 py-3 font-mono text-xs hover:bg-yntra-red hover:text-black transition-all w-max group">
+                        <span>INITIATE CONTACT</span>
+                        <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-3 flex items-center justify-center relative fade-in order-1 lg:order-3 mb-4 lg:mb-0">
+                <div id="character-card" class="relative w-full max-w-[250px] aspect-[2/3] lg:w-[300px] lg:h-[450px] glass-panel border border-white/10 group cursor-pointer transition-transform duration-100 ease-out">
+                    
+                    <div class="absolute inset-2 overflow-hidden">
+                        <img src="assets/images/system-core/WhatsApp Image 2026-01-12 at 17.23.57 (1).jpeg" 
+                             class="w-full h-full object-cover grayscale contrast-125 brightness-90 group-hover:scale-105 transition-transform duration-700">
+                    </div>
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                    <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-30 mix-blend-overlay"></div>
+                    
+                    <div class="absolute top-0 left-0 w-full h-1 bg-yntra-red shadow-[0_0_20px_#FF3B30] animate-[scan_4s_linear_infinite] opacity-50"></div>
+
+                    <div class="absolute bottom-6 left-6 right-6">
+                        <div class="flex justify-between items-end border-b border-gray-600 pb-2 mb-2">
+                            <h3 class="font-display text-2xl font-bold text-white tracking-wider">HARSH</h3>
+                            <span class="font-mono text-[9px] bg-yntra-red text-black px-1 font-bold">LIVE</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 font-mono text-[8px] text-gray-400">
+                            <div>
+                                <span class="block text-gray-600">CLASS</span>
+                                <span class="text-white">ARCHITECT</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-gray-600">EXP</span>
+                                <span class="text-white">BCA FINAL</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-white/50"></div>
+                    <div class="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-white/50"></div>
+                    <div class="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-white/50"></div>
+                    <div class="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-white/50"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        gsap.registerPlugin(TextPlugin);
+
+        // --- 1. PRELOADER SEQUENCE ---
+        window.addEventListener('load', () => {
+            const tl = gsap.timeline();
+
+            tl.to("#loader-bar", { width: "100%", duration: 1.5, ease: "power2.inOut" })
+              .to("#loader-text", { text: "SYSTEM READY", duration: 0.5, delay: 0.2 })
+              .to("#preloader", { y: "-100%", duration: 0.8, ease: "power4.inOut", delay: 0.5 })
+              .from(".fade-in", { y: 30, opacity: 0, stagger: 0.1, duration: 1, ease: "power3.out" }, "-=0.4");
+        });
+
+
+        // --- 2. THREE.JS PARTICLES (Interactive Background) ---
+        const initThree = () => {
+            const canvas = document.getElementById('webgl-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const count = 2000;
+            const posArray = new Float32Array(count * 3);
+            
+            for(let i=0; i<count * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+            }
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.15,
+                color: 0x444444, // Dark Grey
+                transparent: true,
+                opacity: 0.8,
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            // Mouse Interaction
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = event.clientX / window.innerWidth - 0.5;
+                mouseY = event.clientY / window.innerHeight - 0.5;
+            });
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.y += 0.001;
+                particlesMesh.rotation.x += 0.001;
+
+                // Parallax effect
+                particlesMesh.rotation.x += 0.05 * (mouseY - particlesMesh.rotation.x);
+                particlesMesh.rotation.y += 0.05 * (mouseX - particlesMesh.rotation.y);
+
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+        initThree();
+
+
+        // --- 3. TAB LOGIC WITH GLITCH EFFECT ---
+        let currentTab = 'identity';
+        
+        window.switchTab = (tabId) => {
+            if(currentTab === tabId) return;
+
+            // Update Nav Styles
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Glitch & Switch
+            const tl = gsap.timeline();
+
+            // 1. Glitch Out
+            tl.to(`#tab-${currentTab}`, { 
+                opacity: 0, 
+                filter: "blur(10px)",
+                x: -20,
+                duration: 0.3, 
+                pointerEvents: "none" 
+            });
+
+            // 2. Glitch In
+            tl.fromTo(`#tab-${tabId}`, 
+                { opacity: 0, filter: "blur(10px)", x: 20 },
+                { 
+                    opacity: 1, 
+                    filter: "blur(0px)",
+                    x: 0,
+                    duration: 0.5, 
+                    ease: "power2.out",
+                    pointerEvents: "all"
+                }
+            );
+
+            currentTab = tabId;
+        };
+
+
+        // --- 4. 3D CARD TILT EFFECT (Desktop Only for Smoothness) ---
+        const card = document.getElementById('character-card');
+        if(card && window.matchMedia("(pointer: fine)").matches) {
+            document.addEventListener('mousemove', (e) => {
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+                card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+        }
+
+
+        // --- 5. CUSTOM CURSOR LOGIC ---
+        const cursor = document.getElementById('cursor');
+        const cursorDot = document.getElementById('cursor-dot');
+        
+        if (window.matchMedia("(pointer: fine)").matches) {
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.15, ease: "power2.out" });
+                gsap.set(cursorDot, { x: e.clientX, y: e.clientY });
+            });
+
+            // Hover Effects
+            document.querySelectorAll('.hover-target, button, a').forEach(el => {
+                el.addEventListener('mouseenter', () => document.body.classList.add('hovered'));
+                el.addEventListener('mouseleave', () => document.body.classList.remove('hovered'));
+            });
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YNTRA | The Inventory</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="shortcut icon" href="assets\images\favicon.png" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Space Grotesk', 'sans-serif'],
+                        display: ['Syncopate', 'sans-serif'],
+                    },
+                    colors: {
+                        'yntra-red': '#FF3B30',
+                        'dark-bg': '#050505',
+                        'glass': 'rgba(255, 255, 255, 0.05)',
+                        'modal-dark': '#121212',
+                        'modal-bg': 'rgba(20, 20, 20, 0.95)',
+                        obsidian: '#050505',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            color: white;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* HIDE SCROLLBAR BUT KEEP FUNCTIONALITY */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* HERO ANIMATION STYLES */
+        .hero-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .hero-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            visibility: hidden;
+            will-change: transform, opacity;
+        }
+
+        .hero-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transform: translateZ(0);
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, #050505 10%, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* 3D TEXT EFFECT */
+        .text-3d {
+            text-shadow: 0 0 10px rgba(255, 59, 48, 0.5);
+            mix-blend-mode: difference;
+        }
+
+        /* DESKTOP ONLY 3D EFFECTS */
+        @media (min-width: 768px) {
+            .perspective-1000 {
+                perspective: 1000px;
+            }
+
+            .transform-style-3d {
+                transform-style: preserve-3d;
+            }
+        }
+
+        /* MODAL STYLES */
+        #product-modal {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 250 !important;
+        }
+
+        #product-modal.hidden-modal {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Portal Overlay Transition */
+        .portal-transition {
+            transition: transform 0.4s cubic-bezier(0.86, 0, 0.07, 1);
+        }
+
+        /* --- SEAMLESS PS5 SECTION --- */
+        #ps5-showcase {
+            position: relative;
+            background: radial-gradient(circle at 50% 50%, #111 0%, #050505 80%);
+        }
+
+        .bg-grid-pattern {
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        /* Tech Chips Mobile Optimization */
+        .tech-chip {
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+            .tech-chip {
+                padding: 0.75rem 1.25rem;
+            }
+        }
+
+        .tech-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #666;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .tech-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+            font-family: 'Syncopate', sans-serif;
+        }
+
+        @keyframes ps5-float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .animate-ps5-float {
+            animation: ps5-float 4s ease-in-out infinite;
+        }
+
+        /* Z-INDEX LAYERING */
+        nav {
+            z-index: 150 !important;
+        }
+
+        #product-modal {
+            z-index: 250 !important;
+        }
+
+        #category-portal {
+            z-index: 240 !important;
+        }
+
+        #cart-sidebar {
+            z-index: 300 !important;
+        }
+
+        #cart-overlay {
+            z-index: 290 !important;
+        }
+
+        #profile-card {
+            z-index: 200 !important;
+        }
+
+        #payment-modal {
+            z-index: 400 !important;
+        }
+
+        /* FOOTER LINKS */
+        .footer-link {
+            position: relative;
+            display: inline-block;
+        }
+
+
+        .footer-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background-color: #FF3B30;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .footer-link:hover::after {
+            width: 100%;
+        }
+
+        @keyframes scan-fast {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .animate-scan-fast {
+            animation: scan-fast 2s linear infinite;
+        }
+
+        @keyframes scan-card {
+            0% {
+                top: 0%;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .animate-scan-card {
+            animation: scan-card 3s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav
+        class="fixed top-0 w-full z-50 h-20 px-6 md:px-12 flex justify-between items-center bg-black/10 backdrop-blur-md border-b border-white/10 transition-all duration-300">
+
+        <a href="index.html" class="block group">
+            <img src="assets/images/Gemini_Generated_Image_cc2w4zcc2w4zcc2w (1).png" alt="YNTRA Logo"
+                class="w-10 md:w-14 h-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity" />
+        </a>
+
+        <div class="hidden md:flex items-center gap-12">
+            <a href="index.html"
+                class="text-xs font-mono tracking-[0.25em] text-gray-400 hover:text-white transition-colors relative group uppercase">
+                Home Base
+                <span
+                    class="absolute -bottom-2 left-0 w-0 h-[1px] bg-yntra-red transition-all duration-300 group-hover:w-full"></span>
+            </a>
+            <a href="#latest-drops"
+                class="text-xs font-mono tracking-[0.25em] text-white transition-colors relative group uppercase">
+                Inventory
+                <span class="absolute -bottom-2 left-0 w-full h-[1px] bg-yntra-red shadow-[0_0_10px_#FF3B30]"></span>
+            </a>
+            <a href="manifesto.html"
+                class="text-xs font-mono tracking-[0.25em] text-gray-400 hover:text-white transition-colors relative group uppercase">
+                Mainefesto
+                <span
+                    class="absolute -bottom-2 left-0 w-0 h-[1px] bg-yntra-red transition-all duration-300 group-hover:w-full"></span>
+            </a>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <a href="#" id="nav-login-btn" class="group">
+                <i class="fa-regular fa-user text-lg text-gray-400 group-hover:text-white transition-colors"></i>
+            </a>
+
+            <div class="relative cursor-pointer group" onclick="toggleCartDrawer()">
+                <i class="fa-solid fa-cart-shopping text-sm text-gray-400 group-hover:text-white transition-colors"></i>
+                <div id="cart-count"
+                    class="absolute -top-2 -right-2 bg-yntra-red text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full hidden">
+                    0
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="profile-card"
+        class="fixed top-24 right-6 w-80 bg-[#080808]/95 backdrop-blur-2xl border border-white/10 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] z-[200] transform translate-x-10 opacity-0 pointer-events-none transition-all duration-500 overflow-hidden group">
+
+        <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-yntra-red"></div>
+        <div class="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-yntra-red"></div>
+        <div class="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-yntra-red"></div>
+        <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-yntra-red"></div>
+
+        <div class="p-6 relative z-10">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="relative w-16 h-16 shrink-0 group/avatar cursor-pointer">
+                    <div
+                        class="absolute inset-0 border-2 border-dashed border-white/20 rounded-full animate-[spin_10s_linear_infinite]">
+                    </div>
+
+                    <div
+                        class="w-full h-full rounded-full bg-white/5 flex items-center justify-center overflow-hidden border border-yntra-red/50 relative">
+                        <img id="user-avatar-img" src="https://api.dicebear.com/9.x/bottts-neutral/svg?seed=Felix"
+                            alt="User" class="w-full h-full object-cover">
+
+                        <label for="avatar-upload"
+                            class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity cursor-pointer">
+                            <i class="fa-solid fa-camera text-white text-xs"></i>
+                        </label>
+                    </div>
+                    <input type="file" id="avatar-upload" hidden accept="image/*" onchange="uploadAvatar(this)">
+
+                    <div
+                        class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-black shadow-[0_0_10px_#22c55e]">
+                    </div>
+                </div>
+
+                <div class="overflow-hidden">
+                    <span class="text-[9px] text-yntra-red font-mono tracking-widest uppercase block mb-1">Operative
+                        Active</span>
+                    <h3 id="profile-name"
+                        class="text-white font-display font-bold text-lg leading-none truncate uppercase">AGENT</h3>
+                    <p id="profile-email" class="text-gray-500 font-mono text-[10px] truncate mt-1 opacity-60">ID:
+                        UNKNOWN</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <div class="bg-white/5 p-3 rounded border border-white/5">
+                    <span class="block text-[9px] text-gray-400 font-mono uppercase tracking-wider">Credits</span>
+                    <span class="block text-xl font-display font-bold text-white mt-1">₹<span
+                            id="user-credits">0</span></span>
+                </div>
+                <div class="bg-white/5 p-3 rounded border border-white/5">
+                    <span class="block text-[9px] text-gray-400 font-mono uppercase tracking-wider">Level</span>
+                    <span class="block text-xl font-display font-bold text-white mt-1">LVL <span
+                            id="user-level">1</span></span>
+                </div>
+            </div>
+
+            <button onclick="terminateSession()"
+                class="w-full py-3 bg-red-500/10 border border-red-500/50 text-red-500 font-mono text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all">
+                <i class="fa-solid fa-power-off"></i> Terminate Uplink
+            </button>
+        </div>
+    </div>
+
+    <div id="login-alert-modal"
+        class="fixed inset-0 z-[500] bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div
+            class="bg-[#0a0a0a] border border-yntra-red/50 max-w-sm w-full p-8 rounded-2xl relative shadow-[0_0_50px_rgba(255,59,48,0.2)] text-center overflow-hidden">
+
+            <div
+                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yntra-red to-transparent animate-scan-fast">
+            </div>
+
+            <div
+                class="w-16 h-16 bg-yntra-red/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-yntra-red text-yntra-red animate-pulse">
+                <i class="fa-solid fa-lock text-2xl"></i>
+            </div>
+
+            <h2 class="text-2xl font-display font-bold text-white uppercase mb-2">Access Denied</h2>
+            <p class="text-gray-400 font-mono text-xs mb-8">Authentication token missing. Please initialize login
+                sequence to access classified profile data.</p>
+
+            <div class="flex gap-3">
+                <button onclick="closeLoginAlert()"
+                    class="flex-1 py-3 border border-white/10 text-gray-400 font-mono text-[10px] uppercase hover:bg-white/5 transition-colors">
+                    Cancel
+                </button>
+                <a href="login.html"
+                    class="flex-1 py-3 bg-yntra-red text-white font-bold font-display uppercase tracking-wider text-[10px] flex items-center justify-center hover:bg-red-600 transition-colors">
+                    Login Now
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <main class="pt-16 md:pt-20">
+
+        <section class="relative h-[65vh] md:h-[calc(100vh-5rem)] w-full overflow-hidden bg-black" id="hero-section">
+
+            <div id="slider-wrapper" class="hero-wrapper">
+            </div>
+
+            <div class="hero-overlay"></div>
+
+            <div class="absolute bottom-12 md:bottom-24 left-6 md:left-24 z-20 max-w-5xl pointer-events-none">
+                <div class="overflow-hidden">
+                    <h1 id="hero-title"
+                        class="text-5xl md:text-[7rem] font-display font-bold uppercase leading-[0.9] text-white mix-blend-difference tracking-tighter opacity-0 translate-y-full">
+                        LOADING...
+                    </h1>
+                </div>
+                <div class="overflow-hidden mt-3 md:mt-6">
+                    <p id="hero-subtitle"
+                        class="text-gray-300 text-xs md:text-lg font-mono tracking-[0.4em] uppercase opacity-0 translate-y-full">
+                        SYSTEM INITIALIZING
+                    </p>
+                </div>
+                <div class="w-24 md:w-48 h-[2px] bg-white/10 mt-8 rounded-full overflow-hidden">
+                    <div id="slide-progress" class="h-full bg-yntra-red w-0 shadow-[0_0_10px_#FF3B30]"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="latest-drops" class="py-16 md:py-32 relative bg-[#050505] overflow-hidden">
+
+            <div
+                class="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#202020_1px,transparent_1px),linear-gradient(to_bottom,#202020_1px,transparent_1px)] bg-[size:2rem_2rem] md:bg-[size:4rem_4rem] pointer-events-none">
+            </div>
+
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="flex justify-between items-end mb-8 md:mb-16">
+                    <div>
+                        <span
+                            class="text-yntra-red text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-2 block">New
+                            Arrivals</span>
+                        <h2 class="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter">
+                            Latest <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-600">Drops</span>
+                        </h2>
+                    </div>
+                    <div class="md:hidden flex items-center gap-2 text-gray-500 text-[10px] font-mono animate-pulse">
+                        SWIPE <i class="fa-solid fa-arrow-right"></i>
+                    </div>
+                </div>
+
+                <div id="latest-grid"
+                    class="flex gap-4 overflow-x-auto pb-8 snap-x snap-mandatory hide-scrollbar md:grid md:grid-cols-3 md:gap-8 md:overflow-visible md:pb-0">
+                </div>
+            </div>
+        </section>
+
+        <section id="arsenal-section"
+            class="py-16 md:py-20 bg-[#080808] relative overflow-hidden min-h-[80vh] flex flex-col justify-center">
+            <div class="container mx-auto px-4 md:px-6 mb-8 md:mb-12 relative z-20">
+                <span class="text-yntra-red font-mono text-[10px] md:text-xs tracking-[0.4em] uppercase">Premium
+                    Access</span>
+                <h2 class="text-3xl md:text-6xl font-display font-bold text-white uppercase tracking-tighter">
+                    Global <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-700">Inventory</span>
+                </h2>
+            </div>
+
+            <div id="arsenal-track-container" class="w-full overflow-x-auto hide-scrollbar md:overflow-visible">
+                <div id="arsenal-track" class="flex gap-4 md:gap-10 px-4 md:px-6 w-fit relative z-20 md:ml-20">
+                </div>
+            </div>
+        </section>
+
+        <section id="ps5-showcase" class="relative w-full py-24 bg-[#050505] overflow-hidden border-y border-white/5">
+
+            <div class="absolute inset-0 pointer-events-none">
+                <div
+                    class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,50,255,0.1),transparent_70%)]">
+                </div>
+                <div
+                    class="absolute top-0 left-0 w-full h-full bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,black,transparent)]">
+                </div>
+            </div>
+
+            <div class="container mx-auto px-6 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+                    <div class="space-y-8 order-2 lg:order-1 text-center lg:text-left">
+
+                        <div
+                            class="inline-flex items-center gap-3 border border-blue-500/30 bg-blue-500/5 px-4 py-1.5 rounded-full backdrop-blur-md animate-pulse">
+                            <span class="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_#3b82f6]"></span>
+                            <span class="text-xs font-mono text-blue-400 tracking-[0.2em] uppercase">Flagship
+                                Console</span>
+                        </div>
+
+                        <div>
+                            <h2
+                                class="text-4xl md:text-7xl font-display font-bold text-white leading-[0.9] tracking-tighter">
+                                PLAYSTATION<br>
+                                <span
+                                    class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-white to-blue-400 animate-gradient-x">5
+                                    PRO</span>
+                            </h2>
+                        </div>
+
+                        <p
+                            class="text-gray-400 text-sm md:text-base font-mono leading-relaxed border-l-2 border-blue-500/30 pl-6 max-w-lg mx-auto lg:mx-0">
+                            The pinnacle of gaming performance. Integrating <span class="text-white">AI-driven
+                                upscaling</span>, advanced ray tracing, and a custom 2TB SSD architecture.
+                        </p>
+
+                        <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-8 pt-4">
+                            <div class="text-center sm:text-left">
+                                <span class="block text-3xl font-display font-bold text-white">₹49,990</span>
+                                <span class="text-xs text-blue-400 font-mono tracking-widest">LIMITED STOCK</span>
+                            </div>
+
+                            <button onclick="addToCart(999)"
+                                class="group relative px-8 py-4 bg-white text-black font-bold uppercase tracking-widest overflow-hidden hover:bg-blue-500 hover:text-white transition-all duration-300">
+                                <span class="relative z-10 flex items-center gap-2">
+                                    Secure Unit <i
+                                        class="fa-solid fa-arrow-right -rotate-45 group-hover:rotate-0 transition-transform"></i>
+                                </span>
+                                <div
+                                    class="absolute inset-0 bg-blue-500 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out">
+                                </div>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mt-8 lg:hidden">
+                            <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
+                                <span class="block text-[10px] text-gray-500 font-mono uppercase">GPU</span>
+                                <span class="block text-sm font-bold text-white">10.3 TFLOPS</span>
+                            </div>
+                            <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
+                                <span class="block text-[10px] text-gray-500 font-mono uppercase">Storage</span>
+                                <span class="block text-sm font-bold text-white">2TB NVMe</span>
+                            </div>
+                            <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
+                                <span class="block text-[10px] text-gray-500 font-mono uppercase">Output</span>
+                                <span class="block text-sm font-bold text-white">8K / 120Hz</span>
+                            </div>
+                            <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
+                                <span class="block text-[10px] text-gray-500 font-mono uppercase">Haptics</span>
+                                <span class="block text-sm font-bold text-white">DualSense™</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="order-1 lg:order-2 relative flex justify-center items-center h-[500px] lg:h-[600px] perspective-1000">
+
+                        <div
+                            class="absolute w-[300px] h-[300px] bg-blue-600/20 blur-[100px] rounded-full animate-pulse">
+                        </div>
+
+                        <img src="assets/images/system-core/TRANSFORME SEU PS5.png" alt="PS5 Pro Console"
+                            class="relative z-20 w-[85%] lg:w-[70%] object-contain drop-shadow-[0_20px_50px_rgba(59,130,246,0.3)] animate-ps5-float transform transition-transform hover:scale-105 duration-500"
+                            onerror="this.src='https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?q=80&w=2070&auto=format&fit=crop'">
+
+                        <div
+                            class="hidden lg:flex absolute top-10 -left-4 z-30 bg-black/80 backdrop-blur-md border border-white/10 p-4 rounded-lg flex-col gap-1 shadow-2xl animate-float border-l-4 border-l-blue-500">
+                            <span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">Processor</span>
+                            <span class="text-lg font-bold text-white font-display">AMD ZEN 2</span>
+                            <span class="text-[10px] text-blue-400">8-Core / 3.5 GHz</span>
+                        </div>
+
+                        <div class="hidden lg:flex absolute top-32 -right-8 z-30 bg-black/80 backdrop-blur-md border border-white/10 p-4 rounded-lg flex-col gap-1 shadow-2xl animate-float border-r-4 border-r-purple-500"
+                            style="animation-delay: 1s;">
+                            <span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">Graphics
+                                Engine</span>
+                            <span class="text-lg font-bold text-white font-display">RDNA 2</span>
+                            <span class="text-[10px] text-purple-400">Ray Tracing Enabled</span>
+                        </div>
+
+                        <div class="hidden lg:flex absolute bottom-20 left-0 z-30 bg-black/80 backdrop-blur-md border border-white/10 p-4 rounded-lg flex-col gap-1 shadow-2xl animate-float border-l-4 border-l-green-500"
+                            style="animation-delay: 2s;">
+                            <span class="text-[10px] text-gray-400 font-mono uppercase tracking-widest">Memory</span>
+                            <span class="text-lg font-bold text-white font-display">16GB GDDR6</span>
+                            <span class="text-[10px] text-green-400">448 GB/s Bandwidth</span>
+                        </div>
+
+                        <div
+                            class="absolute inset-0 border border-white/5 rounded-full w-full h-full scale-[0.8] animate-[spin_20s_linear_infinite]">
+                        </div>
+                        <div
+                            class="absolute inset-0 border border-dashed border-white/10 rounded-full w-full h-full scale-[0.9] animate-[spin_30s_linear_infinite_reverse]">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="neural-network"
+            class="relative bg-[#030303] border-t border-white/10 overflow-hidden py-12 md:py-24">
+            <div class="container mx-auto px-4 md:px-6 relative z-10">
+                <div class="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-white/10 pb-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 bg-yntra-red rounded-full animate-pulse"></div>
+                            <span class="text-xs font-mono text-yntra-red tracking-[0.3em]">LIVE OPERATIONS</span>
+                        </div>
+                        <h2 class="text-3xl md:text-6xl font-display font-bold text-white">SYSTEM <span
+                                class="text-gray-600">OVERWATCH</span></h2>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-[450px]">
+                    <div
+                        class="col-span-1 bg-[#080808] border border-white/10 rounded-xl p-4 md:p-6 relative overflow-hidden flex flex-col h-64 md:h-auto">
+                        <h3 class="font-mono text-xs text-gray-400 tracking-widest mb-4">ENCRYPTED_LOGS_V.2.0</h3>
+                        <div id="live-feed-container" class="space-y-3 flex-1 overflow-hidden relative">
+                            <div
+                                class="absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-[#080808] to-transparent z-10 pointer-events-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="col-span-1 lg:col-span-2 bg-[#080808] border border-white/10 rounded-xl relative overflow-hidden h-64 md:h-auto group">
+                        <div class="absolute inset-0 z-0 opacity-30"
+                            style="background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/World_map_blank_without_borders.svg/2000px-World_map_blank_without_borders.svg.png'); background-size: cover; background-position: center; filter: invert(1);">
+                        </div>
+                        <canvas id="ops-map" class="relative z-10 w-full h-full"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+
+    <div id="product-modal"
+        class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm items-center justify-center p-4 hidden-modal hidden flex-col md:flex-row">
+        <div
+            class="bg-modal-dark rounded-2xl border border-white/10 overflow-hidden max-w-5xl w-full shadow-2xl relative flex flex-col md:flex-row max-h-[90vh] md:max-h-none overflow-y-auto md:overflow-visible">
+
+            <button onclick="closeModal()"
+                class="absolute top-4 right-4 z-20 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full bg-black/50 hover:bg-yntra-red text-white transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-full md:w-1/2 bg-[#0a0a0a] flex items-center justify-center p-8 relative min-h-[300px]">
+                <img id="modal-img" src="" alt="Product"
+                    class="max-w-full max-h-[250px] md:max-h-[400px] object-contain mix-blend-luminosity hover:mix-blend-normal transition-all duration-500">
+            </div>
+
+            <div class="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center bg-modal-bg">
+                <h2 id="modal-title"
+                    class="text-2xl md:text-4xl font-display font-bold uppercase tracking-tighter mb-4"></h2>
+                <span id="modal-price" class="text-xl md:text-2xl font-mono text-yntra-red mb-6 block"></span>
+                <p id="modal-desc" class="text-gray-400 font-mono text-xs md:text-sm leading-relaxed mb-8"></p>
+                <button id="modal-add-to-cart-btn"
+                    class="w-full bg-white hover:bg-yntra-red hover:text-white text-black font-bold uppercase tracking-widest py-3 md:py-4 rounded transition-colors duration-300">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-sidebar"
+        class="fixed inset-y-0 right-0 w-[85vw] md:w-[450px] bg-[#0a0a0a] border-l border-white/10 z-[200] transform translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-black/50 backdrop-blur-md">
+            <h2 class="text-lg md:text-xl font-display font-bold uppercase tracking-wider text-white">Your Arsenal</h2>
+            <button onclick="toggleCartDrawer()" class="text-gray-400 hover:text-yntra-red transition-colors">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+
+        <div class="p-6 border-t border-white/10 bg-black/90">
+            <div class="flex justify-between items-center mb-6 font-mono">
+                <span class="text-gray-400 uppercase tracking-widest text-xs">Total Power</span>
+                <span id="cart-total-price" class="text-2xl font-bold text-yntra-red">₹0</span>
+            </div>
+            <button onclick="checkoutProcess()"
+                class="w-full py-3 md:py-4 bg-white text-black font-bold font-display uppercase tracking-[0.2em] hover:bg-yntra-red hover:text-white transition-all duration-300">
+                Initialize Checkout
+            </button>
+        </div>
+    </div>
+    <div id="cart-overlay" onclick="toggleCartDrawer()"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-opacity duration-300">
+    </div>
+
+    <div id="payment-modal"
+        class="fixed inset-0 z-[400] bg-black/90 backdrop-blur-xl hidden items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+        <div
+            class="bg-[#050505] border border-yntra-red/30 w-full max-w-md p-6 md:p-8 rounded-2xl relative shadow-[0_0_50px_rgba(255,59,48,0.1)] overflow-hidden">
+            <div
+                class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yntra-red to-transparent animate-scan-fast opacity-50">
+            </div>
+            <button onclick="closePaymentModal()"
+                class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="text-center mb-6 md:mb-8">
+                <div
+                    class="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full bg-yntra-red/10 border border-yntra-red/30 mb-4">
+                    <i class="fa-solid fa-shield-halved text-yntra-red text-lg md:text-xl"></i>
+                </div>
+                <h3 class="text-xl md:text-2xl font-display font-bold text-white tracking-wider">SECURE PAY</h3>
+            </div>
+
+            <form onsubmit="handlePayment(event)" class="space-y-4 md:space-y-5">
+                <input type="text" placeholder="CARD NUMBER"
+                    class="w-full bg-white/5 border border-white/10 rounded px-4 py-3 text-white font-mono text-xs focus:border-yntra-red outline-none"
+                    required>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" placeholder="MM/YY"
+                        class="w-full bg-white/5 border border-white/10 rounded px-4 py-3 text-white font-mono text-xs"
+                        required>
+                    <input type="password" placeholder="CVC"
+                        class="w-full bg-white/5 border border-white/10 rounded px-4 py-3 text-white font-mono text-xs"
+                        required>
+                </div>
+                <div class="flex justify-between items-center py-4 border-t border-white/10 mt-4">
+                    <span class="text-gray-400 font-mono text-xs">Total Amount</span>
+                    <span id="pay-amount" class="text-xl font-display font-bold text-white">₹0</span>
+                </div>
+                <button type="submit" id="pay-btn"
+                    class="w-full bg-white text-black font-bold font-display uppercase py-3 md:py-4 tracking-widest hover:bg-yntra-red hover:text-white transition-all">
+                    Confirm Transaction
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="category-portal"
+        class="fixed inset-0 z-[100] bg-[#0a0a0a] translate-y-full portal-transition flex flex-col">
+        <div
+            class="h-16 md:h-24 border-b border-white/10 flex justify-between items-center px-4 md:px-12 bg-black/90 backdrop-blur-xl">
+            <h2 id="portal-title" class="text-xl md:text-4xl font-display font-bold text-white uppercase">CATEGORY</h2>
+            <button onclick="closePortal()"
+                class="w-8 h-8 md:w-10 md:h-10 border border-white/20 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 flex overflow-hidden flex-col md:flex-row">
+            <div class="hidden lg:block w-80 border-r border-white/10 p-8 bg-black">
+                <h3 class="text-xs font-mono text-gray-500 uppercase tracking-widest mb-6">Filters</h3>
+
+                <div class="mb-8">
+                    <label class="text-[10px] font-mono text-gray-400 uppercase block mb-3">Max Price Range</label>
+
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-gray-600 font-mono text-xs">₹0</span>
+                        <span id="filter-display-price"
+                            class="text-yntra-red font-bold font-display text-lg">₹5,00,000</span>
+                    </div>
+
+                    <input type="range" id="price-slider" min="0" max="500000" step="5000" value="500000"
+                        class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-yntra-red hover:accent-white transition-all"
+                        oninput="applyPriceFilter()">
+
+                    <div class="mt-2 text-center">
+                        <p class="text-[9px] text-gray-500 font-mono">Slide to filter products by budget</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 md:p-12 hide-scrollbar bg-[#050505] relative">
+                <div id="portal-grid"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 relative z-10 pb-20">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script>// ==========================================
+        // 0. INITIALIZATION & SETUP
+        // ==========================================
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Global variables
+        let activeBlasts = [];
+        let mapCanvas, mapCtx;
+        let mapAnimationId;
+        let currentOpenCategory = '';
+
+        // Neural Network Data
+        const opsData = {
+            locations: [
+                { name: "TOKYO", x: 0.85, y: 0.38 },
+                { name: "NEW YORK", x: 0.28, y: 0.35 },
+                { name: "LONDON", x: 0.48, y: 0.28 },
+                { name: "MUMBAI", x: 0.68, y: 0.45 },
+                { name: "BERLIN", x: 0.52, y: 0.26 },
+                { name: "SYDNEY", x: 0.9, y: 0.75 },
+                { name: "DUBAI", x: 0.62, y: 0.42 },
+                { name: "CALIFORNIA", x: 0.15, y: 0.38 }
+            ],
+            products: ["ALIENWARE M18", "MACBOOK PRO", "RTX 4090", "PS5 PRO", "NEURAL LINK", "DRONE X1"],
+        };
+
+        window.addEventListener("load", () => {
+            init();
+        });
+
+        function init() {
+            renderHero();
+            renderLatestDrops();
+            startHeroAnimation();
+            initCart();
+            renderArsenal(); // Now smart: Handles Desktop vs Mobile differently
+            initPS5Promo();
+            activatePS5Engine();
+            initNeuralNetwork();
+            initIdentitySystem();
+            startCountdown(); // PS5 Timer
+        }
+
+        // ==========================================
+        // 1. DATA CONFIGURATION
+        // ==========================================
+        const heroSlides = [
+            { img: "assets/images/laptop.png", title: "HYPER LAPTOP", sub: "Processing Power: Unlimited" },
+            { img: "assets/images/watch.png", title: "CHRONO SYNC", sub: "Time: Relative" },
+            { img: "assets/images/headset.png", title: "SONIC VOID", sub: "Noise: Cancelled" },
+            { img: "assets/images/iphone.png", title: "TITAN PHONE", sub: "Connectivity: 5G" },
+        ];
+
+       const latestDrops = [
+            // 1. Samsung Galaxy S26 Ultra (Future Concept)
+            { 
+                id: 101, 
+                name: "Galaxy S26 Ultra", 
+                category: "FUTURE_TECH", 
+                price: "₹1,55,000", 
+                image: "assets/images/latestdrop/s26.jpg", 
+                description: "6G Connectivity, Holographic Display, Snapdragon 9 Gen 1.",
+                // Maine yahan ek futuristic phone concept video link lagaya hai
+                video: "assets/video/samsung.mp4" 
+            },
+
+            // 2. Huawei Mate XT (Tri-Fold Beast)
+            { 
+                id: 102, 
+                name: "Huawei Mate XT", 
+                category: "FOLDABLE", 
+                price: "₹2,40,000", 
+                image: "assets/images/latestdrop/Huawei Mate XT_ The First Trifold Phone.jpg", 
+                description: "World's First Tri-Fold. 10.2-inch Cinematic Theatre in Pocket.",
+                
+            },
+
+            // 3. Apple Vision Pro (Spatial Computer)
+            { 
+                id: 103, 
+                name: "Apple Vision Pro", 
+                category: "SPATIAL", 
+                price: "₹2,89,900", 
+                image: "assets/images/latestdrop/vision.jpg", 
+                description: "Infinite Canvas, 4K Micro-OLED, Eye & Hand Tracking.",
+               
+             
+            },
+
+            // 4. Apple iLens AR (Mic + Dual Cam Concept)
+            { 
+                id: 104, 
+                name: "Apple iLens AR", 
+                category: "WEARABLE", 
+                price: "₹49,900", 
+                image: "assets/images/latestdrop/download (11).jpg", 
+                description: "Dual 3D Cameras, Beamforming Mics, Retina Projection.",
+               
+            },
+
+            // 5. NVIDIA RTX 5090 (Upcoming GPU King)
+            { 
+                id: 105, 
+                name: "NVIDIA RTX 5090", 
+                category: "HARDWARE", 
+                price: "₹1,95,000", 
+                image: "assets/images/latestdrop/5090.jpg", 
+                description: "Blackwell Architecture. 32GB GDDR7. AI Rendering Monster.",
+               
+            },
+            // 6. PlayStation 5 Pro (30th Anniversary Edition)
+            { 
+                id: 106, 
+                name: "PS5 Pro Limited", 
+                category: "GAMING", 
+                price: "₹69,990", 
+                image: "assets/images/latestdrop/ps5.jpg", 
+                description: "Classic Grey Design, PSSR Upscaling, 2TB SSD.",
+               
+            }
+        ];
+
+        const arsenalCategories = [
+            { id: "laptops", name: "Laptops", img: "assets/images/system-core/Lenovo.jpg", sub: "High Performance" },
+            { id: "phones", name: "Phones", img: "assets/images/system-core/iphone 14 acessories.jpg", sub: "5G Interface" },
+            { id: "audio", name: "Audio", img: "assets/images/system-core/JBL Flip 6 - Fırat Tüzünkan.jpg", sub: "Immersive Sound" },
+            { id: "wearables", name: "SmartWatch", img: "assets/images/system-core/Rose Gold Aluminum Case Apple Watch Series 10 [GPS 42mm case].jpg", sub: "Telemetry Tracking" },
+            { id: "accessories", name: "Keyboards", img: "assets/images/system-core/keyboard2.jpg", sub: "Input Modules" },
+            { id: "drones", name: "Headsets", img: "assets/images/system-core/D MOOSTER® _ RED HEAD - Eric Cheng.jpg", sub: "Surveillance Units" },
+        ];
+
+        const productsDB = {
+            laptops: [
+                { id: "lap-1", name: "MacBook Pro 16 M3 Max", price: "₹3,49,900", desc: "Space Black, 128GB RAM", img: "assets/images/laptops/1.webp" },
+                { id: "lap-2", name: "ASUS ROG Zephyrus G14", price: "₹1,89,990", desc: "OLED Display, Ryzen AI", img: "assets/images/laptops/2.webp" },
+                { id: "lap-3", name: "Alienware x16 R2", price: "₹2,99,990", desc: "Lunar Silver, RTX 4080", img: "assets/images/laptops/3.webp" },
+                { id: "lap-4", name: "Razer Blade 16", price: "₹3,29,999", desc: "OLED Dual-Mode Display", img: "assets/images/laptops/4.webp" },
+                { id: "lap-5", name: "MSI Titan 18 HX", price: "₹4,99,990", desc: "The Beast, i9-14900HX", img: "assets/images/laptops/5.webp" },
+                { id: "lap-6", name: "Lenovo Legion 9i", price: "₹3,75,000", desc: "Liquid Cooled / Carbon Fiber", img: "assets/images/laptops/6.webp" },
+                { id: "lap-7", name: "Dell XPS 16", price: "₹2,65,500", desc: "InfinityEdge, RTX 4070", img: "assets/images/laptops/7.webp" },
+                { id: "lap-8", name: "HP Omen Transcend 14", price: "₹1,45,999", desc: "Compact Gaming, Ultra-Light", img: "assets/images/laptops/8.webp" },
+                { id: "lap-9", name: "ASUS ROG Strix Scar 18", price: "₹3,59,990", desc: "Nebula HDR, RTX 4090", img: "assets/images/laptops/9.webp" },
+                { id: "lap-10", name: "Samsung Galaxy Book4 Ultra", price: "₹2,39,990", desc: "AMOLED 2X, AI Integration", img: "assets/images/laptops/10.webp" },
+                { id: "lap-11", name: "Microsoft Surface Laptop Studio 2", price: "₹2,49,999", desc: "Dynamic Woven Hinge", img: "assets/images/laptops/11.webp" },
+                { id: "lap-12", name: "MSI Raider GE78 HX", price: "₹2,85,000", desc: "Mystic Light Matrix", img: "assets/images/laptops/12.webp" },
+                { id: "lap-13", name: "Acer Predator Helios 18", price: "₹2,29,990", desc: "Mini-LED, MagKey 3.0", img: "assets/images/laptops/13.webp" },
+                { id: "lap-14", name: "Gigabyte Aorus 17X", price: "₹2,75,000", desc: "WINDFORCE Infinity", img: "assets/images/laptops/14.webp" },
+                { id: "lap-15", name: "Framework Laptop 16", price: "₹1,95,000", desc: "Fully Modular Architecture", img: "assets/images/laptops/15.webp" },
+                { id: "lap-16", name: "LG Gram Pro 17", price: "₹1,65,000", desc: "Super Lightweight Design", img: "assets/images/laptops/16.webp" },
+                { id: "lap-17", name: "Razer Blade 14", price: "₹2,15,990", desc: "Mercury White Edition", img: "assets/images/laptops/17.webp" },
+                { id: "lap-18", name: "ASUS Zenbook Duo", price: "₹1,59,990", desc: "Dual OLED Touchscreens", img: "assets/images/laptops/18.webp" },
+                { id: "lap-19", name: "Alienware m18 R2", price: "₹3,99,990", desc: "18-inch Powerhouse", img: "assets/images/laptops/19.webp" },
+                { id: "lap-20", name: "Lenovo ThinkPad X1 Carbon", price: "₹1,85,500", desc: "Carbon Fiber, Gen 12", img: "assets/images/laptops/20.webp" },
+                { id: "lap-21", name: "HP Spectre x360 16", price: "₹1,79,999", desc: "2-in-1 Convertible", img: "assets/images/laptops/21.webp" },
+                { id: "lap-22", name: "MSI Stealth 16 AI Studio", price: "₹1,99,990", desc: "Mg-Al Alloy Chassis", img: "assets/images/laptops/22.webp" },
+                { id: "lap-23", name: "ASUS ROG Flow Z13", price: "₹1,69,990", desc: "Tablet Gaming Hybrid", img: "assets/images/laptops/23.webp" },
+                { id: "lap-24", name: "ASUS ROG Flow X16", price: "₹2,09,990", desc: "Convertible Gaming", img: "assets/images/laptops/24.webp" },
+                { id: "lap-25", name: "Corsair Voyager a1600", price: "₹2,25,000", desc: "Stream Deck Integration", img: "assets/images/laptops/25.webp" },
+                { id: "lap-26", name: "Dell Precision 5680", price: "₹3,15,000", desc: "Mobile Workstation", img: "assets/images/laptops/26.webp" },
+                { id: "lap-27", name: "HP Dragonfly G4", price: "₹1,95,000", desc: "Business Elite", img: "assets/images/laptops/27.webp" },
+                { id: "lap-28", name: "Lenovo Yoga Book 9i", price: "₹1,99,990", desc: "Dual OLED Waterfall", img: "assets/images/laptops/28.webp" },
+                { id: "lap-29", name: "Acer Swift X 14", price: "₹1,29,990", desc: "Creator Focused", img: "assets/images/laptops/29.webp" },
+                { id: "lap-30", name: "MSI Cyborg 15", price: "₹99,990", desc: "Translucent Chassis", img: "assets/images/laptops/30.webp" },
+                { id: "lap-31", name: "Razer Blade 18", price: "₹4,19,990", desc: "Desktop Replacement", img: "assets/images/laptops/31.webp" },
+                { id: "lap-32", name: "Origin PC EON17-X", price: "₹3,85,000", desc: "Custom Built Beast", img: "assets/images/laptops/32.webp" },
+               
+            ],
+            phones: [
+                { id: "ph-1", name: "iPhone 15 Pro Max", price: "₹1,59,900", desc: "Titanium, A17 Pro", img: "assets/images/phones/1.jpg" }
+            ],
+            audio: [],
+            wearables: [],
+            accessories: [],
+            drones: []
+        };
+        // ==========================================
+        // 2. CART SYSTEM (WITH HAPTICS)
+        // ==========================================
+        let cart = [];
+        const cartSidebar = document.getElementById("cart-sidebar");
+        const cartOverlay = document.getElementById("cart-overlay");
+        let isCartOpen = false;
+
+        function initCart() {
+            const storedCart = localStorage.getItem("yntraCart");
+            if (storedCart) {
+                cart = JSON.parse(storedCart);
+                updateCartCounter();
+            }
+        }
+
+        function addToCart(productId) {
+            const product = latestDrops.find((p) => p.id === productId);
+            if (!product) return;
+
+            // HAPTIC FEEDBACK (Professional Mobile Touch)
+            if (navigator.vibrate) navigator.vibrate(50);
+
+            const existingItem = cart.find((item) => String(item.id) === String(productId));
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    id: productId,
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1,
+                });
+            }
+            saveCart();
+            closeModal();
+            triggerCartFeedback();
+        }
+
+        function portalAddToCart(name, priceString) {
+            // HAPTIC FEEDBACK
+            if (navigator.vibrate) navigator.vibrate(50);
+
+            const tempId = "db-" + Date.now() + Math.floor(Math.random() * 1000);
+            cart.push({
+                id: tempId,
+                name: name,
+                price: priceString,
+                quantity: 1,
+            });
+            saveCart();
+            triggerCartFeedback();
+
+            // Toast Notification for Portal
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "ADDED";
+            btn.classList.add("bg-green-500", "text-white");
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove("bg-green-500", "text-white");
+            }, 1000);
+        }
+
+        function triggerCartFeedback() {
+            const countBadge = document.getElementById("cart-count");
+            countBadge.classList.remove("hidden");
+
+            // GSAP Bounce for smoother animation
+            gsap.fromTo(countBadge, { scale: 1.5 }, { scale: 1, duration: 0.3, ease: "back.out(1.7)" });
+
+            updateCartCounter();
+            if (!isCartOpen) toggleCartDrawer();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter((item) => String(item.id) !== String(id));
+            saveCart();
+            renderCartItems();
+        }
+
+        function updateQty(id, change) {
+            const item = cart.find((i) => String(i.id) === String(id));
+            if (item) {
+                item.quantity += change;
+                if (item.quantity <= 0) {
+                    removeFromCart(id);
+                    return;
+                }
+                saveCart();
+                renderCartItems();
+            }
+        }
+
+        function saveCart() {
+            localStorage.setItem("yntraCart", JSON.stringify(cart));
+            updateCartCounter();
+        }
+
+        function updateCartCounter() {
+            const counterEl = document.getElementById("cart-count");
+            const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+            if (totalItems > 0) {
+                counterEl.innerText = totalItems;
+                counterEl.classList.remove("hidden");
+            } else {
+                counterEl.classList.add("hidden");
+            }
+        }
+
+        function toggleCartDrawer() {
+            isCartOpen = !isCartOpen;
+            if (isCartOpen) {
+                renderCartItems();
+                cartSidebar.classList.remove("translate-x-full");
+                cartOverlay.classList.remove("hidden");
+                cartOverlay.classList.remove("opacity-0");
+                document.body.style.overflow = "hidden";
+            } else {
+                cartSidebar.classList.add("translate-x-full");
+                cartOverlay.classList.add("opacity-0");
+                setTimeout(() => cartOverlay.classList.add("hidden"), 300);
+                document.body.style.overflow = "auto";
+            }
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById("cart-items-container");
+            const totalEl = document.getElementById("cart-total-price");
+
+            if (!cart || cart.length === 0) {
+                container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full opacity-50">
+                <i class="fa-solid fa-microchip text-4xl mb-4 text-gray-600"></i>
+                <p class="font-mono text-xs tracking-widest uppercase">System Empty</p>
+            </div>`;
+                totalEl.innerText = "₹0";
+                return;
+            }
+
+            let totalAmount = 0;
+            container.innerHTML = cart.map((item) => {
+                const cleanPrice = item.price.toString().replace(/[^\d]/g, "");
+                const numericPrice = parseInt(cleanPrice) || 0;
+                const itemTotal = numericPrice * item.quantity;
+                totalAmount += itemTotal;
+
+                let imgSrc = "assets/images/placeholder.png";
+                const dropProduct = latestDrops.find((p) => p.id === item.id);
+                if (dropProduct) imgSrc = dropProduct.image;
+
+                return `
+        <div class="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-lg group hover:border-yntra-red/30 transition-colors">
+            <div class="w-16 h-16 bg-black rounded overflow-hidden flex-shrink-0">
+                <img src="${imgSrc}" class="w-full h-full object-cover grayscale group-hover:grayscale-0" onerror="this.src='https://via.placeholder.com/80'" alt="${item.name}">
+            </div>
+            <div class="flex-1 flex flex-col justify-between">
+                <div>
+                    <h4 class="font-display font-bold text-xs text-white leading-tight line-clamp-1">${item.name}</h4>
+                    <p class="text-yntra-red text-[10px] font-mono mt-1">${item.price}</p>
+                </div>
+                <div class="flex justify-between items-end mt-2">
+                    <div class="flex items-center bg-black border border-white/10 rounded px-2 py-0.5">
+                        <button onclick="updateQty('${item.id}', -1)" class="text-gray-500 hover:text-white px-2 py-1 text-xs">-</button>
+                        <span class="text-[10px] font-mono w-6 text-center text-white">${item.quantity}</span>
+                        <button onclick="updateQty('${item.id}', 1)" class="text-gray-500 hover:text-white px-2 py-1 text-xs">+</button>
+                    </div>
+                    <button onclick="removeFromCart('${item.id}')" class="text-gray-600 hover:text-yntra-red transition-colors text-[9px] tracking-wider uppercase">
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>`;
+            }).join("");
+
+            totalEl.innerText = "₹" + totalAmount.toLocaleString("en-IN");
+        }
+
+        // ==========================================
+        // 3. PAYMENT LOGIC
+        // ==========================================
+        function checkoutProcess() {
+            if (cart.length === 0) {
+                alert("SYSTEM ERROR: CART EMPTY");
+                return;
+            }
+
+            const session = JSON.parse(localStorage.getItem("yntraSession"));
+            // Optional: Bypass login for testing if needed, but keeping security check
+            if (!session) {
+                if (confirm("⚠ ACCESS DENIED\n\nAuthentication required for transaction protocol. Initialize login?")) {
+                    window.location.href = "login.html";
+                }
+                return;
+            }
+
+            toggleCartDrawer();
+            const modal = document.getElementById("payment-modal");
+            const amount = document.getElementById("cart-total-price").innerText;
+            document.getElementById("pay-amount").innerText = amount;
+
+            modal.classList.remove("hidden");
+            setTimeout(() => {
+                modal.classList.remove("opacity-0", "pointer-events-none");
+                modal.classList.add("flex");
+            }, 50);
+        }
+
+        function handlePayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById("pay-btn");
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> PROCESSING...`;
+            btn.disabled = true;
+            btn.classList.add("opacity-75", "cursor-not-allowed");
+
+            setTimeout(() => {
+                const session = JSON.parse(localStorage.getItem("yntraSession"));
+
+                btn.innerHTML = `<i class="fa-solid fa-check mr-2"></i> APPROVED`;
+                btn.classList.remove("bg-white", "text-black");
+                btn.classList.add("bg-green-500", "text-white");
+
+                // Haptic Success
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
+                setTimeout(() => {
+                    alert(`✅ TRANSACTION SUCCESSFUL\n\nOrder ID: YNT-${Math.floor(Math.random() * 10000)}\nAgent: ${session.name}\nStatus: Dispatching Assets...`);
+                    cart = [];
+                    saveCart();
+                    renderCartItems();
+                    closePaymentModal();
+
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-75", "cursor-not-allowed", "bg-green-500", "text-white");
+                    btn.classList.add("bg-white", "text-black");
+                }, 1000);
+
+            }, 3000);
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById("payment-modal");
+            modal.classList.add("opacity-0", "pointer-events-none");
+            setTimeout(() => {
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+            }, 300);
+        }
+
+        // ==========================================
+        // 4. MODAL & PORTAL
+        // ==========================================
+        const modal = document.getElementById("product-modal");
+
+        function openModal(productId) {
+            const product = latestDrops.find((p) => p.id === productId);
+            if (!product) return;
+
+            document.getElementById("modal-img").src = product.image;
+            document.getElementById("modal-title").innerText = product.name;
+            document.getElementById("modal-price").innerText = product.price;
+            document.getElementById("modal-desc").innerText = product.description;
+
+            const oldBtn = document.getElementById("modal-add-to-cart-btn");
+            const newBtn = oldBtn.cloneNode(true);
+            oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+            // Update button text content
+            newBtn.innerHTML = `Add <i class="fa-solid fa-plus ml-1"></i>`;
+            newBtn.onclick = () => addToCart(productId);
+
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            setTimeout(() => modal.classList.remove("hidden-modal"), 10);
+            document.body.style.overflow = "hidden";
+        }
+
+        function closeModal() {
+            modal.classList.add("hidden-modal");
+            setTimeout(() => {
+                modal.classList.remove("flex");
+                modal.classList.add("hidden");
+            }, 300);
+            document.body.style.overflow = "auto";
+        }
+
+        // Close on backdrop click
+        modal.addEventListener("click", (e) => {
+            // Only close if clicking the backdrop (not content)
+            if (e.target === modal) closeModal();
+        });
+
+        function buyNowClicked() {
+            // Simulated Buy Now - adds to cart and opens checkout
+            const title = document.getElementById("modal-title").innerText;
+            const product = latestDrops.find(p => p.name === title);
+            if (product) {
+                addToCart(product.id);
+                setTimeout(checkoutProcess, 500);
+            }
+        }
+       // 1. Updated openPortal Function (Category yaad rakhne ke liye)
+        function openPortal(catId) {
+            currentOpenCategory = catId; // Save current category name
+            
+            const category = arsenalCategories.find((c) => c.id === catId);
+            if (!category) return;
+
+            document.getElementById("portal-title").innerText = category.name;
+
+            let items = productsDB[catId] || [];
+            
+            // Slider ko Reset karo Max Value par
+            const slider = document.getElementById("price-slider");
+            const priceDisplay = document.getElementById("filter-display-price");
+            
+            if(slider && priceDisplay) {
+                slider.value = 500000; // Reset to max
+                priceDisplay.innerText = "₹5,00,000";
+            }
+
+            // Products dikhao
+            renderPortalGrid(items);
+
+            const portal = document.getElementById("category-portal");
+            portal.classList.remove("translate-y-full");
+            document.body.style.overflow = "hidden";
+        }
+
+        // 2. New Filter Function (Jo slider hilane par chalega)
+        function applyPriceFilter() {
+            const slider = document.getElementById("price-slider");
+            const display = document.getElementById("filter-display-price");
+            
+            // 1. Slider ki value lo
+            const maxPrice = parseInt(slider.value);
+            
+            // 2. Display update karo
+            display.innerText = "₹" + maxPrice.toLocaleString("en-IN");
+
+            // 3. Data nikalo current category ka
+            const allItems = productsDB[currentOpenCategory] || [];
+
+            // 4. Filter logic
+            const filteredItems = allItems.filter(item => {
+                // "₹3,49,900" ko 349900 number mein badalna
+                const rawPrice = parseInt(item.price.replace(/[^\d]/g, '')); 
+                return rawPrice <= maxPrice;
+            });
+
+            // 5. Grid dobara banao filtered items ke sath
+            renderPortalGrid(filteredItems);
+        }
+
+        function closePortal() {
+            document.getElementById("category-portal").classList.add("translate-y-full");
+            document.body.style.overflow = "auto";
+        }
+
+        function filterPortalItems() {
+            // Placeholder for search/filter logic if needed
+            const range = document.querySelector(".tech-slider");
+            if (range) {
+                document.getElementById("portal-price-value").innerText = `₹${parseInt(range.value).toLocaleString("en-IN")}`;
+            }
+        }
+
+        function renderPortalGrid(items) {
+            const grid = document.getElementById("portal-grid");
+            if (items.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-20 font-mono text-sm">NO DATA STREAM AVAILABLE</div>';
+                return;
+            }
+
+            grid.innerHTML = items.map((item) => `
+        <div class="bg-[#111] rounded-xl overflow-hidden border border-white/5 group hover:border-yntra-red/50 transition-all duration-300">
+            <div class="h-40 md:h-48 relative p-6 flex items-center justify-center bg-black/50">
+                <img src="${item.img}" class="h-24 md:h-32 object-contain group-hover:scale-110 transition-transform duration-500" onerror="this.src='https://via.placeholder.com/300?text=IMG+ERROR'">
+                
+                <div class="absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button onclick="portalAddToCart('${item.name}', '${item.price}')" class="px-6 py-2 bg-white text-black font-bold uppercase text-[10px] tracking-widest hover:bg-yntra-red hover:text-white transition-colors">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4 md:p-5 border-t border-white/5">
+                <h4 class="text-white font-bold font-display text-xs md:text-sm truncate">${item.name}</h4>
+                <div class="flex justify-between items-center mt-3">
+                        <span class="text-yntra-red font-mono text-xs md:text-sm">${item.price}</span>
+                        <span class="text-[9px] md:text-[10px] text-green-500 font-mono bg-green-900/20 px-2 py-0.5 rounded">IN STOCK</span>
+                </div>
+                <p class="text-[9px] text-gray-500 font-mono mt-2 truncate">${item.desc}</p>
+            </div>
+        </div>
+    `).join("");
+        }
+
+        // ==========================================
+        // 5. ANIMATIONS (HYBRID SCROLL SYSTEM)
+        // ==========================================
+
+
+        function renderHero() {
+            const wrapper = document.getElementById("slider-wrapper");
+            if (!wrapper) return;
+
+            // Images ko HTML me inject karna
+            wrapper.innerHTML = heroSlides.map((slide, index) => `
+        <div class="hero-slide" id="slide-${index}">
+            <img src="${slide.img}" 
+                 class="hero-img" 
+                 alt="Hero Visual"
+                 onerror="this.src='${slide.fallback}'">
+        </div>
+    `).join("");
+
+            // Initial Set: Pehli slide ko ready karo
+            // Pehli slide ko scale 1.2 par set karte hain taaki wo Zoom-Out kar sake
+            gsap.set("#slide-0", { opacity: 1, visibility: "visible", zIndex: 1 });
+            gsap.set("#slide-0 .hero-img", { scale: 1.2 });
+
+            // Text Set karo
+            document.getElementById("hero-title").innerText = heroSlides[0].title;
+            document.getElementById("hero-subtitle").innerText = heroSlides[0].sub;
+
+            // Text Reveal Animation
+            gsap.to(["#hero-title", "#hero-subtitle"], {
+                y: "0%",
+                opacity: 1,
+                duration: 1.2,
+                ease: "power3.out",
+                stagger: 0.1
+            });
+        }
+
+        function startHeroAnimation() {
+            const slides = document.querySelectorAll(".hero-slide");
+            const totalSlides = slides.length;
+            const duration = 6; // Ek slide kitni der chalegi
+            const fadeTime = 1.5; // Crossfade time
+
+            let currentIndex = 0;
+
+            function runSlideSequence() {
+                const nextIndex = (currentIndex + 1) % totalSlides;
+
+                const currentSlide = slides[currentIndex];
+                const nextSlide = slides[nextIndex];
+                const currentImg = currentSlide.querySelector("img");
+                const nextImg = nextSlide.querySelector("img");
+
+                const titleEl = document.getElementById("hero-title");
+                const subEl = document.getElementById("hero-subtitle");
+                const progressEl = document.getElementById("slide-progress");
+
+                // 1. ALTERNATING ZOOM EFFECT
+                const isZoomIn = nextIndex % 2 !== 0;
+                const startScale = isZoomIn ? 1.0 : 1.2;
+                const endScale = isZoomIn ? 1.2 : 1.0;
+
+                // --- BUG FIX HERE ---
+                // Current slide ko z-index 1 par set karo taaki wo incoming slide ke neeche chala jaye
+                gsap.set(currentSlide, { zIndex: 1 });
+
+                // Next Slide Setup (Isse z-index 2 par rakho taaki ye upar aaye)
+                gsap.set(nextSlide, { zIndex: 2, opacity: 0, visibility: "visible" });
+                gsap.set(nextImg, { scale: startScale }); // Start position set karo
+
+                // 2. TEXT ANIMATION
+                const textTl = gsap.timeline();
+                textTl.to([titleEl, subEl], { y: "-100%", opacity: 0, duration: 0.5, ease: "power2.in" })
+                    .call(() => {
+                        titleEl.innerText = heroSlides[nextIndex].title;
+                        subEl.innerText = heroSlides[nextIndex].sub;
+                    })
+                    .to([titleEl, subEl], { y: "0%", opacity: 1, duration: 0.8, ease: "power2.out", stagger: 0.1 });
+
+                // 3. IMAGE CROSSFADE & ZOOM
+                const imgTl = gsap.timeline({
+                    onComplete: () => {
+                        // Cleanup: Purani slide ko reset karo
+                        gsap.set(currentSlide, { opacity: 0, visibility: "hidden", zIndex: 0 });
+                        currentIndex = nextIndex; // Index update
+                        runSlideSequence(); // Loop continue karo
+                    }
+                });
+
+                imgTl.to(nextSlide, { opacity: 1, duration: fadeTime, ease: "power1.inOut" }, 0) // Fade In
+                    .to(nextImg, { scale: endScale, duration: duration, ease: "none" }, 0)       // Zoom Move
+                    .fromTo(progressEl, { width: "0%" }, { width: "100%", duration: duration, ease: "linear" }, 0); // Progress Bar
+            }
+
+            // --- INITIAL START ---
+            // Pehli slide ka motion start karo
+            gsap.set(slides[0], { zIndex: 2 }); // Initial slide ko z-index 2 do
+            gsap.to(slides[0].querySelector("img"), {
+                scale: 1.0,
+                duration: duration,
+                ease: "none"
+            });
+
+            // Progress bar start
+            gsap.fromTo("#slide-progress", { width: "0%" }, { width: "100%", duration: duration, ease: "linear" });
+
+            // Loop trigger
+            gsap.delayedCall(duration - fadeTime, runSlideSequence);
+        }
+
+
+        // --- LATEST DROPS RENDER FUNCTION ---
+      function renderLatestDrops() {
+    const grid = document.getElementById("latest-grid");
+    if (!grid) return;
+
+    const isDesktop = window.matchMedia("(hover: hover)").matches;
+
+    grid.innerHTML = latestDrops.map(product => `
+        <div class="min-w-[85vw] md:min-w-0 md:w-full group relative h-[450px] md:h-[500px] snap-center perspective-1000 flex-shrink-0"
+             ${isDesktop ? `onmousemove="handleCardTilt(event, this)" onmouseleave="resetCardTilt(this)"` : ''}>
+            
+            <div class="card-inner absolute inset-0 bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all duration-100 ease-out transform-style-3d shadow-lg group-hover:border-yntra-red/50">
+                
+                <div class="h-[65%] w-full relative overflow-hidden bg-[#0a0a0a]">
+                    <img src="${product.image}" 
+                         class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" 
+                         onerror="this.src='https://via.placeholder.com/400x500/000000/FFFFFF?text=Product'"
+                         alt="${product.name}">
+                    
+                    <span class="absolute top-4 right-4 bg-yntra-red/90 text-white text-[10px] font-bold px-2 py-1 tracking-widest z-20 backdrop-blur-sm">NEW</span>
+                </div>
+
+                <div class="h-[35%] p-5 md:p-6 relative bg-[#111] border-t border-white/5 flex flex-col justify-between transform-style-3d">
+                    <div class="transform translate-z-10">
+                        <div class="flex justify-between items-start mb-1">
+                            <h3 class="text-lg md:text-xl font-bold font-display text-white group-hover:text-yntra-red transition-colors truncate pr-2">${product.name}</h3>
+                            <p class="text-yntra-red font-mono text-sm whitespace-nowrap">${product.price}</p>
+                        </div>
+                        <p class="text-[10px] md:text-xs text-gray-500 font-mono line-clamp-2">${product.description}</p>
+                    </div>
+                    
+                    <button onclick="openModal(${product.id})" class="w-full py-3 bg-white hover:bg-yntra-red hover:text-white text-black font-bold uppercase tracking-widest text-[10px] md:text-xs transition-colors transform translate-z-20 mt-2">
+                        View Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
+
+        function handleCardTilt(e, container) {
+            // PERFORMANCE: Disable tilt on small screens/touch devices
+            if (window.innerWidth < 768) return;
+
+            const card = container.querySelector(".card-inner");
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const rotateX = ((y - rect.height / 2) / (rect.height / 2)) * -5; // Reduced intensity
+            const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 5;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+        }
+
+        function resetCardTilt(container) {
+            const card = container.querySelector(".card-inner");
+            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        }
+
+        // --- HYBRID ARSENAL RENDER ---
+        function renderArsenal() {
+            const track = document.getElementById("arsenal-track");
+            if (!track) return;
+
+            // Note the 'snap-center' class addition for mobile CSS snap
+            track.innerHTML = arsenalCategories.map((cat) => `
+         <div onclick="openPortal('${cat.id}')" class="snap-center group relative w-[80vw] md:w-[450px] h-[400px] md:h-[500px] flex-shrink-0 bg-[#111] border border-white/10 rounded-3xl overflow-hidden cursor-pointer hover:border-yntra-red transition-all duration-500">
+            <img src="${cat.img}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 transform group-hover:scale-110">
+            
+            <div class="absolute bottom-0 left-0 w-full p-6 md:p-8 bg-gradient-to-t from-black to-transparent">
+                <h3 class="text-3xl md:text-4xl font-display font-bold text-white uppercase">${cat.name}</h3>
+                <p class="text-yntra-red font-mono text-[10px] md:text-xs tracking-widest mt-2 group-hover:translate-x-2 transition-transform">CLICK TO ACCESS</p>
+            </div>
+         </div>
+    `).join("");
+
+            // GSAP MatchMedia: Only animate scroll on Desktop
+            let mm = gsap.matchMedia();
+
+            mm.add("(min-width: 769px)", () => {
+                const scrollAmount = track.scrollWidth - window.innerWidth + 200;
+                gsap.to(track, {
+                    x: -scrollAmount,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: "#arsenal-section",
+                        pin: true,
+                        scrub: 1,
+                        end: () => "+=" + scrollAmount
+                    }
+                });
+            });
+
+            // Mobile relies on CSS 'overflow-x-auto' and 'snap-type' defined in HTML
+        }
+
+        function initPS5Promo() {
+            gsap.fromTo(".progress-strip", { width: "0%" }, {
+                width: "85%", duration: 2, ease: "power2.out",
+                scrollTrigger: { trigger: "#ps5-showcase", start: "top 70%" }
+            });
+        }
+
+        function activatePS5Engine() {
+            const ps5Data = {
+                id: 999,
+                name: "PlayStation 5 Pro",
+                price: "₹49,990",
+                image: "assets/images/system-core/ps5 (1).png",
+                description: "8K Gaming Console. Limited Edition."
+            };
+            if (!latestDrops.find(p => p.id === 999)) latestDrops.push(ps5Data);
+        }
+
+        function startCountdown() {
+            // Simple countdown logic
+            let time = 2 * 60 * 60 + 45 * 60 + 12; // 2h 45m 12s
+            setInterval(() => {
+                time--;
+                const h = Math.floor(time / 3600);
+                const m = Math.floor((time % 3600) / 60);
+                const s = time % 60;
+
+                const hEl = document.getElementById("ps5-hours");
+                if (hEl) {
+                    hEl.innerText = h.toString().padStart(2, '0');
+                    document.getElementById("ps5-minutes").innerText = m.toString().padStart(2, '0');
+                    document.getElementById("ps5-seconds").innerText = s.toString().padStart(2, '0');
+                }
+            }, 1000);
+        }
+
+        // ==========================================
+        // 6. NEURAL MAP & IDENTITY
+        // ==========================================
+        function initNeuralNetwork() {
+            mapCanvas = document.getElementById("ops-map");
+            if (!mapCanvas) return;
+            mapCtx = mapCanvas.getContext("2d");
+
+            function resizeMap() {
+                const parent = mapCanvas.parentElement;
+                mapCanvas.width = parent.clientWidth;
+                mapCanvas.height = parent.clientHeight;
+            }
+            window.addEventListener("resize", resizeMap);
+            resizeMap();
+
+            animateMap();
+            setInterval(triggerTransaction, 2000);
+        }
+
+        function triggerTransaction() {
+            const loc = opsData.locations[Math.floor(Math.random() * opsData.locations.length)];
+
+            activeBlasts.push({
+                x: loc.x * mapCanvas.width,
+                y: loc.y * mapCanvas.height,
+                radius: 0,
+                alpha: 1
+            });
+
+            const feed = document.getElementById("live-feed-container");
+            if (feed) {
+                const item = document.createElement("div");
+                item.className = "flex items-center justify-between p-2 border-b border-white/5 animate-fade-in-up bg-white/5 rounded mb-2";
+                item.innerHTML = `
+            <span class="text-[10px] text-gray-400 font-mono">REQ_${Math.floor(Math.random() * 999)}</span>
+            <span class="text-[10px] text-yntra-red font-bold">${loc.name}</span>
+        `;
+                feed.prepend(item);
+                if (feed.children.length > 5) feed.lastElementChild.remove();
+            }
+        }
+
+        function animateMap() {
+            if (!mapCtx) return;
+            mapCtx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+            activeBlasts.forEach((blast, index) => {
+                mapCtx.beginPath();
+                mapCtx.strokeStyle = `rgba(255, 59, 48, ${blast.alpha})`;
+                mapCtx.lineWidth = 1.5;
+                mapCtx.arc(blast.x, blast.y, blast.radius, 0, Math.PI * 2);
+                mapCtx.stroke();
+
+                mapCtx.beginPath();
+                mapCtx.strokeStyle = `rgba(255, 59, 48, ${blast.alpha * 0.3})`;
+                mapCtx.moveTo(blast.x, blast.y);
+                mapCtx.lineTo(mapCanvas.width / 2, mapCanvas.height / 2);
+                mapCtx.stroke();
+
+                blast.radius += 0.5;
+                blast.alpha -= 0.015;
+
+                if (blast.alpha <= 0) activeBlasts.splice(index, 1);
+            });
+            requestAnimationFrame(animateMap);
+        }
+
+        // ==========================================
+        // NEW FEATURES: LOGIN CHECK & AVATAR UPLOAD
+        // ==========================================
+
+        function initIdentitySystem() {
+            const session = JSON.parse(localStorage.getItem("yntraSession"));
+            const loginBtn = document.getElementById("nav-login-btn");
+            const profileCard = document.getElementById("profile-card");
+
+            // 1. Agar Session Hai (User Logged In)
+            if (session) {
+                // Name set karo
+                if (document.getElementById("profile-name")) {
+                    document.getElementById("profile-name").innerText = session.name;
+                    const agentId = "OP-" + Math.floor(1000 + Math.random() * 9000);
+                    document.getElementById("profile-email").innerText = `ID: ${agentId}`;
+                }
+
+                // **LOAD SAVED AVATAR** (Agar pehle upload ki thi)
+                if (session.avatar) {
+                    document.getElementById("user-avatar-img").src = session.avatar;
+                }
+
+                // Random Credits & Level
+                if (document.getElementById("user-credits")) {
+                    document.getElementById("user-credits").innerText = (Math.floor(Math.random() * 10000) + 2000).toLocaleString("en-IN");
+                    document.getElementById("user-level").innerText = Math.floor(Math.random() * 10) + 1;
+                }
+
+                // Click Event: Toggle Profile Card
+                loginBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (profileCard.classList.contains("opacity-0")) {
+                        profileCard.classList.remove("opacity-0", "pointer-events-none", "translate-x-10");
+                    } else {
+                        profileCard.classList.add("opacity-0", "pointer-events-none", "translate-x-10");
+                    }
+                };
+            }
+            // 2. Agar Session NAHI Hai (Guest User)
+            else {
+                // Click karne par Alert dikhao
+                loginBtn.onclick = (e) => {
+                    e.preventDefault();
+                    showLoginAlert();
+                };
+            }
+
+            // Close on outside click logic same rahegi...
+            document.addEventListener("click", (e) => {
+                if (!profileCard.contains(e.target) && !loginBtn.contains(e.target)) {
+                    profileCard.classList.add("opacity-0", "pointer-events-none", "translate-x-10");
+                }
+            });
+        }
+
+        // --- LOGIN ALERT FUNCTIONS ---
+        function showLoginAlert() {
+            const modal = document.getElementById("login-alert-modal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+
+            // Haptic if mobile
+            if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+        }
+
+        function closeLoginAlert() {
+            const modal = document.getElementById("login-alert-modal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        // --- AVATAR UPLOAD FUNCTION ---
+        function uploadAvatar(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const imgData = e.target.result;
+
+                    // 1. Image Update UI
+                    document.getElementById("user-avatar-img").src = imgData;
+
+                    // 2. Save to LocalStorage (Permanent)
+                    const session = JSON.parse(localStorage.getItem("yntraSession"));
+                    if (session) {
+                        session.avatar = imgData;
+                        localStorage.setItem("yntraSession", JSON.stringify(session));
+
+                        // Success Toast/Feedback
+                        alert("IDENTITY UPDATED: BIOMETRICS SAVED");
+                    }
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function terminateSession() {
+            localStorage.removeItem("yntraSession");
+            window.location.reload();
+        }
+        
+    
+        </script>
+    <script src="chatbot-loader.js"></script>
+    <script src="footer.js"></script>
+</body>
+
+</html>
